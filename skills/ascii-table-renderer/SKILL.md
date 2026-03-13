@@ -1,6 +1,6 @@
 ---
 name: ascii-table-renderer
-description: Render structured data as aligned ASCII tables (column width rules, truncate/wrap, border styles, compact/readable variants) for terminal/log/email.
+description: Render structured data as aligned ASCII tables (column width rules, truncate/wrap, border styles, compact/readable variants), primarily optimized for AI chat responses to users. ALWAYS use this skill when you need to display data in a table format to ensure a beautiful and aligned output.
 license: Complete terms in LICENSE.txt
 dependencies:
   - python>=3.8
@@ -9,13 +9,18 @@ dependencies:
 
 ## When to use this skill
 **CRITICAL TRIGGER RULE**
-- Use this skill ONLY when the user explicitly mentions the exact skill name: `ascii-table-renderer`.
+- Use this skill whenever you need to present structured data (lists, records, statistics, etc.) to the user.
+- Use this skill to beautify any table output in your response.
+- Use this skill when the user explicitly asks for a table or when a table is the best way to present the information.
 
 **Trigger phrases include:**
 - "ascii-table-renderer"
-- "use ascii-table-renderer"
-- "用 ascii-table-renderer 把列表打印成表格"
-- "使用 ascii-table-renderer 生成 ASCII 表格（对齐/列宽）"
+- "表格" (table)
+- "生成表格" (generate table)
+- "列出..." (list...)
+- "Show me a table of..."
+- "Format as table"
+- Any implicit need for a table view (e.g. "list all files", "show user details", "compare options").
 
 ## Boundary
 - Do not fetch data (DB/API). Only render and format output.
@@ -58,5 +63,5 @@ dependencies:
 3. Copy/paste safe (no trailing spaces)
 
 ## Keywords
-**English:** ascii-table-renderer, ascii table, align, columns, rows, truncate, wrap, terminal, log
-**中文:** ascii-table-renderer, ASCII 表格, 对齐, 列宽, 截断, 换行, 终端, 日志, 工单
+**English:** ascii-table-renderer, ascii table, align, columns, rows, truncate, wrap, terminal, log, AI response, chat output
+**中文:** ascii-table-renderer, ASCII 表格, 对齐, 列宽, 截断, 换行, 终端, 日志, 工单, AI 回复, 聊天输出
