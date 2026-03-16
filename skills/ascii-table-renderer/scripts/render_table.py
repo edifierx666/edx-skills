@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from dataclasses import dataclass
 from typing import Any, List, Sequence
 
@@ -41,6 +42,17 @@ def parse_args(argv: Sequence[str] | None = None) -> Options:
     )
 
 
+def get_display_width(text: str) -> int:
+    """计算字符串的实际显示宽度（支持中英文混合）。"""
+    width = 0
+    for char in text:
+        if unicodedata.east_asian_width(char) in ('F', 'W'):
+            width += 2
+        else:
+            width += 1
+    return width
+
+
 def _stringify(value: Any) -> str:
     """把值转换为可显示字符串。"""
 
@@ -49,36 +61,54 @@ def _stringify(value: Any) -> str:
     return str(value)
 
 
-def _truncate(text: str, width: int) -> str:
-    """按列宽截断文本。"""
+def _truncate(text: str, width: int, use_ellipsis: bool = True) -> str:
+    """按列宽截断文本（支持中英文混合）。"""
 
     if width <= 0:
         return ""
-    if len(text) <= width:
+    if get_display_width(text) <= width:
         return text
-    if width <= 3:
-        return text[:width]
-    return text[: width - 3] + "..."
+
+    if use_ellipsis and width > 3:
+        target_width = width - 3
+        suffix = "..."
+    else:
+        target_width = width
+        suffix = ""
+
+    res = ""
+    cur_width = 0
+    for char in text:
+        char_width = 2 if unicodedata.east_asian_width(char) in ('F', 'W') else 1
+        if cur_width + char_width > target_width:
+            break
+        res += char
+        cur_width += char_width
+    return res + suffix
 
 
 def _pad(text: str, width: int, align: str) -> str:
     """按对齐方式填充字符串到固定宽度。"""
 
-    text = text[:width]
+    curr_width = get_display_width(text)
+    pad_len = max(0, width - curr_width)
     if align == "right":
-        return text.rjust(width)
+        return " " * pad_len + text
     if align == "center":
-        return text.center(width)
-    return text.ljust(width)
+        left_pad = pad_len // 2
+        right_pad = pad_len - left_pad
+        return " " * left_pad + text + " " * right_pad
+    return text + " " * pad_len
 
 
 def _compute_widths(headers: List[str], rows: List[List[str]], max_col_width: int) -> List[int]:
     """计算列宽（按最大内容宽度，受 max_col_width 限制）。"""
 
-    widths = [min(max_col_width, max(1, len(h))) for h in headers]
+    widths = [min(max_col_width, max(1, get_display_width(h))) for h in headers]
     for r in rows:
         for i, cell in enumerate(r):
-            widths[i] = min(max_col_width, max(widths[i], len(cell)))
+            if i < len(widths):
+                widths[i] = min(max_col_width, max(widths[i], get_display_width(cell)))
     return widths
 
 
@@ -97,10 +127,7 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
     widths = _compute_widths(headers, normalized_rows, opt.max_col_width)
 
     def cell(text: str, w: int) -> str:
-        if opt.overflow == "ellipsis":
-            text = _truncate(text, w)
-        else:
-            text = text[:w]
+        text = _truncate(text, w, use_ellipsis=(opt.overflow == "ellipsis"))
         return _pad(text, w, opt.align)
 
     def sep(ch: str = "-") -> str:
@@ -128,7 +155,7 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
 
     out = "\n".join(lines)
     # maxWidth 只做保底截断（避免极端输入刷屏）
-    return "\n".join(line[: opt.max_width].rstrip() for line in out.splitlines()).rstrip()
+    return "\n".join(_truncate(line, opt.max_width, False).rstrip() for line in out.splitlines()).rstrip()
 
 
 def main(argv: Sequence[str] | None = None) -> int:
