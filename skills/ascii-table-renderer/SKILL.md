@@ -14,6 +14,10 @@ dependencies:
 - Use this skill to beautify any table output in your response.
 - Use this skill when the user explicitly asks for a table or when a table is the best way to present the information.
 
+**🚨 IMPORTANT: HOW TO EXECUTE 🚨**
+- **DO NOT attempt to draw the ASCII table yourself in the chat response.** LLMs cannot correctly calculate East Asian character widths (like Chinese or IDEographic punctuation), meaning your manually generated borders will ALWAYS be misaligned!
+- You **MUST** use the terminal tool (`run_command`) to execute `scripts/render_table.py` by echoing a JSON of the data into it, and then outputting the EXACT result of that script to the user.
+
 **Trigger phrases include:**
 
 - "ascii-table-renderer" / "表格" (table)
