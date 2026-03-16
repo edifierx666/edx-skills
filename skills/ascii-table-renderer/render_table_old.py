@@ -145,7 +145,7 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
         lines.append(sep("-"))
     lines.append(row_line(headers))
     if opt.border == "minimal":
-        lines.append("-" * max(10, sum(widths) + (len(widths) - 1) * 2))
+        lines.append("-" * min(opt.max_width, max(10, sum(widths) + (len(widths) - 1) * 2)))
     else:
         lines.append(sep("-"))
     for r in normalized_rows:
@@ -154,21 +154,17 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
         lines.append(sep("-"))
 
     out = "\n".join(lines)
-    
+    # maxWidth 只做保底截断（避免极端输入刷屏）
+    final_out = "\n".join(_truncate(line, opt.max_width, False).rstrip() for line in out.splitlines()).rstrip()
+
     # Calculate actual width to check if table exceeds max_width
     actual_width = 0
     if opt.border == "minimal":
-        actual_width = max(10, sum(widths) + (len(widths) - 1) * 2)
+        actual_width = sum(widths) + (len(widths) - 1) * 2
     else:
         actual_width = sum(widths) + len(widths) * 3 + 1
 
     is_exceeded = actual_width > opt.max_width
-
-    # We use actual_width to truncate so it guarantees straight right-edge alignment 
-    # (which visually fixed proportional font shifts). 
-    # This renders the full table without adding line breaks.
-    render_width = max(opt.max_width, actual_width) 
-    final_out = "\n".join(_truncate(line, render_width, False).strip('\r\n') for line in out.splitlines())
 
     # Check if any cell content was truncated because of max_col_width
     cell_truncated = False
