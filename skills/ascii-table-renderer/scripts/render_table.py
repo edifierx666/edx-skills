@@ -145,7 +145,7 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
         lines.append(sep("-"))
     lines.append(row_line(headers))
     if opt.border == "minimal":
-        lines.append("-" * min(opt.max_width, max(10, sum(widths) + (len(widths) - 1) * 2)))
+        lines.append("-" * max(10, sum(widths) + (len(widths) - 1) * 2))
     else:
         lines.append(sep("-"))
     for r in normalized_rows:
@@ -154,8 +154,72 @@ def render_table(headers: List[str], rows: List[List[str]], opt: Options) -> str
         lines.append(sep("-"))
 
     out = "\n".join(lines)
-    # maxWidth 只做保底截断（避免极端输入刷屏）
-    return "\n".join(_truncate(line, opt.max_width, False).rstrip() for line in out.splitlines()).rstrip()
+    # 取消 maxWidth 对行尾的硬截断或强制换行。
+    # 强制渲染完整表格（超出界面也只保持单行被终端被动 soft-wrap 折叠，用户放大窗口时自适应恢复而不断行）
+    final_out = "\n".join(line.rstrip() for line in out.splitlines()).rstrip()
+
+    # Calculate actual width to check if table exceeds max_width
+    actual_width = 0
+    if opt.border == "minimal":
+        actual_width = sum(widths) + (len(widths) - 1) * 2
+    else:
+        actual_width = sum(widths) + len(widths) * 3 + 1
+
+    is_exceeded = actual_width > opt.max_width
+
+    # Check if any cell content was truncated because of max_col_width
+    cell_truncated = False
+    max_content_width = 0
+    for h in headers:
+        w = get_display_width(h)
+        if w > max_content_width: max_content_width = w
+        if w > opt.max_col_width: cell_truncated = True
+    for r in normalized_rows:
+        for c in r:
+            w = get_display_width(c)
+            if w > max_content_width: max_content_width = w
+            if w > opt.max_col_width: cell_truncated = True
+
+    if is_exceeded or cell_truncated:
+        reasons = []
+        if is_exceeded:
+            reasons.append(f"表格总宽度 ({actual_width}) 超出屏幕最大宽度限制 ({opt.max_width})")
+        if cell_truncated:
+            reasons.append(f"部分单元格内容超出了最大列宽 ({opt.max_col_width}) 导致被截断或换行")
+        
+        reason_str = "，且".join(reasons)
+        suggested_max_col = max_content_width if cell_truncated else opt.max_col_width
+        
+        # Calculate suggested max width
+        new_widths = [min(suggested_max_col, max(1, get_display_width(h))) for h in headers]
+        for r in normalized_rows:
+            for i, cell_val in enumerate(r):
+                if i < len(new_widths):
+                    new_widths[i] = min(suggested_max_col, max(new_widths[i], get_display_width(cell_val)))
+        
+        if opt.border == "minimal":
+            suggested_max_w = sum(new_widths) + (len(new_widths) - 1) * 2
+        else:
+            suggested_max_w = sum(new_widths) + len(new_widths) * 3 + 1
+            
+        suggested_max_w = max(opt.max_width, suggested_max_w)
+        
+        cmd_args = f"--format {opt.fmt} --max-width {suggested_max_w} --max-col-width {suggested_max_col}"
+        if opt.overflow != "ellipsis": cmd_args += f" --overflow {opt.overflow}"
+        if opt.border != "light": cmd_args += f" --border {opt.border}"
+        if opt.align != "left": cmd_args += f" --align {opt.align}"
+        
+        hint = (
+            f"\n\n> [!NOTE]\n"
+            f"> **原因**：{reason_str}。\n"
+            f"> **重新调用的指令**：如需查看完整未截断的表格，请调整参数重新执行：\n"
+            f"> ```bash\n"
+            f"> cat data.json | python3 scripts/render_table.py {cmd_args}\n"
+            f"> ```"
+        )
+        final_out += hint
+
+    return final_out
 
 
 def main(argv: Sequence[str] | None = None) -> int:
