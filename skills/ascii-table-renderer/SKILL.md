@@ -1,9 +1,10 @@
 ---
 name: ascii-table-renderer
-description: Render any kind of structured data, lists, comparisons, or multi-field records as aligned ASCII tables. Extensively used for AI chat responses, log visualizations, and terminal output. ALWAYS use this skill whenever displaying multiple properties of items, comparing things, listing status, fetching records, or when data is better presented in rows and columns to ensure a beautiful, readable, and perfectly aligned output.
+description: Render any kind of structured data, lists, comparisons, or multi-field records as aligned terminal tables with Rich Unicode borders and safe wrapping. Extensively used for AI chat responses, log visualizations, and terminal output. ALWAYS use this skill whenever displaying multiple properties of items, comparing things, listing status, fetching records, or when data is better presented in rows and columns to ensure a beautiful, readable, and perfectly aligned output.
 license: Complete terms in LICENSE.txt
 dependencies:
   - python>=3.8
+  - rich
 ---
 
 ## When to use this skill
@@ -34,41 +35,53 @@ dependencies:
 ## Boundary
 
 - Do not fetch data (DB/API). Only render and format output.
-- Default borders are ASCII-only: `+ - |`.
-- Out of scope: merged cells, multi-row headers, complex spanning layouts.
+- Default output uses Rich Unicode borders, not ASCII-only `+ - |`.
+- Long content should wrap inside cells instead of being truncated with `...`.
+- Out of scope: merged cells, multi-row headers, complex spanning layouts, array-row input.
 
 ## How to use this skill
 
 ### Inputs
 
-- headers (required)
-- rows (required)
-- maxWidth (default 80)
-- maxColWidth (default 20)
-- borderStyle (light | minimal, default light)
-- overflow (ellipsis | wrap, default ellipsis)
-- align (left | right | center, default left)
+The script reads a JSON object from stdin with this shape:
 
-### Outputs (required)
+- `columns` (required): non-empty array of column objects
+  - `key` (required)
+  - `header` (optional, defaults to `key`)
+  - `align` (`left` | `center` | `right`)
+  - `min_width` (optional)
+  - `max_width` (optional)
+  - `priority` (optional, default `100`)
+- `rows` (required): array of row objects; array rows are not supported
+- `options` (optional):
+  - `max_width`
+  - `padding`
+  - `box`
+  - `show_header`
+  - `show_lines`
+  - `terminal_width_fallback`
 
-- tableCompact (log-friendly)
-- tableReadable (interactive-friendly)
-- rules (width/truncation/null/alignment rules)
-- **Note**: If the generated table exceeds the `maxWidth` or cell contents are truncated due to `maxColWidth`, the script will automatically append a recall instruction with suggested parameters to generate the full table.
+### CLI overrides
 
-### Steps
+- `--max-width`
+- `--box`
+- `--no-header`
+- `--json-path`
 
-1. Compute per-column widths: `min(maxColWidth, max(contentWidth))`
-2. Handle overflow:
-   - ellipsis: use `...` consistently
-   - wrap: wrap within column width while keeping row alignment
-3. Output two variants:
-   - compact: minimal or fewer separators
-   - readable: clearer borders
+CLI overrides take precedence over JSON `options`.
+
+### Behavior guarantees
+
+- Null / missing values render as `-`
+- Scalars render as strings
+- Objects / arrays render as compact JSON text
+- Markup-like text such as `[red]value[/red]` is rendered literally
+- Cell content wraps without inserting `...` or `…`
+- The renderer tries to keep the whole table within the target width, but if every column is already at its minimum width it may allow the table to grow wider rather than lose content
 
 ## Script
 
-- `scripts/render_table.py`: render tables from JSON stdin (compact/readable)
+- `scripts/render_table.py`: render a Rich table from JSON stdin or `--json-path`
 
 ## Examples
 
@@ -76,7 +89,7 @@ dependencies:
 
 ## Quality checklist
 
-1. Columns align consistently; each line does not exceed maxWidth
+1. Columns align consistently; the renderer stays within the target width whenever possible and only exceeds it when preserving content requires a wider render
 2. Null values are rendered as `-`
 3. Copy/paste safe (no trailing spaces)
 
