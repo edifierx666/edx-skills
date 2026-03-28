@@ -107,6 +107,10 @@ from termaid import render_rich
 rprint(render_rich("graph LR\n A --> B", theme="terra"))
 ```
 
+## Examples
+
+- `examples/basic.md`
+
 ## Supported diagrams
 
 - flowcharts

@@ -17,7 +17,19 @@ dependencies:
 
 **🚨 IMPORTANT: HOW TO EXECUTE 🚨**
 - **DO NOT attempt to draw the ASCII table yourself in the chat response.** LLMs cannot correctly calculate East Asian character widths (like Chinese or IDEographic punctuation), meaning your manually generated borders will ALWAYS be misaligned!
-- You **MUST** use the terminal tool (`run_command`) to execute `scripts/render_table.py` by echoing a JSON of the data into it, and then outputting the EXACT result of that script to the user.
+- You **MUST** use the terminal tool (`run_command`) to execute `scripts/render_table.py` by passing pure JSON via `cat << 'EOF'`.
+- **CRITICAL**: DO NOT use a Python heredoc (`python - <<'PY'`) with a Python dictionary literal to generate the JSON, as this frequently causes `NameError: name 'true' is not defined` when handling boolean values (`true` vs `True`). ALWAYS pipe pure JSON string using `cat << 'EOF'`.
+
+Example of the ONLY correct way to execute:
+```bash
+cat << 'EOF' | python3 /absolute/path/to/skills/ascii-table-renderer/scripts/render_table.py
+{
+  "columns": [{"key": "id", "header": "ID"}],
+  "rows": [{"id": "1"}],
+  "options": { "show_lines": true }
+}
+EOF
+```
 
 **Trigger phrases include:**
 
