@@ -20,7 +20,11 @@ The scope is intentionally tight: terminal `flowchart` / `graph` first, `renderM
 **Trigger phrases include:**
 
 - "beautiful-mermaid"
+- "画图"
+- "画流程图"
 - "终端流程图" / "在终端里画流程图"
+- "Mermaid 图"
+- "Mermaid 流程图"
 - "Mermaid flowchart in terminal"
 - "ASCII flowchart"
 - "用 Mermaid 在 CLI 里画流程图"
