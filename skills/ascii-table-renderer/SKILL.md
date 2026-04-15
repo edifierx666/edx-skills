@@ -69,6 +69,7 @@ The script reads a JSON object from stdin with this shape:
   - `max_width`
   - `padding`
   - `box`
+  - `cjk_safe` (default `true`; auto-switch to ASCII borders when CJK / wide glyph content would make Unicode borders drift in CJK terminals)
   - `show_header`
   - `show_lines`
   - `terminal_width_fallback`
@@ -89,6 +90,7 @@ CLI overrides take precedence over JSON `options`.
 - Objects / arrays render as compact JSON text
 - Markup-like text such as `[red]value[/red]` is rendered literally
 - Cell content wraps without inserting `...` or `…`
+- By default, tables containing CJK / wide glyph content switch to ASCII borders for safer alignment across CJK terminals; set `options.cjk_safe` to `false` to keep the requested Unicode box style
 - The renderer tries to keep the whole table within the target width, but if every column is already at its minimum width it may allow the table to grow wider rather than lose content
 
 ## Script

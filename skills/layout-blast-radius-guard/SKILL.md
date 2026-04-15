@@ -1,6 +1,6 @@
 ---
 name: layout-blast-radius-guard
-description: Use when changing CSS, layout, spacing, containers, overlays, or interaction hit areas where blast radius, semantic class boundaries, and rendering side effects must be evaluated before making style changes.
+description: "Use when frontend changes touch CSS, layout, spacing, responsive containers, flex/grid, scroll, overflow, z-index, overlays, masks, hit areas, images, class names, shared styles, or symptoms like 样式乱了, 弹层被截断, 点击失效, 滚动没了, 内容溢出, 改容器影响别处."
 ---
 
 # Layout Blast Radius Guard
@@ -14,6 +14,14 @@ description: Use when changing CSS, layout, spacing, containers, overlays, or in
 ## When to Use
 
 Use when changing layout, CSS, class naming, spacing, container sizing, overlays, scroll behavior, hit areas, or shared styles where visual side effects may propagate beyond the local component.
+
+Trigger phrases include:
+
+- CSS / layout / spacing / responsive / flex / grid / container / class name
+- overflow / z-index / pointer-events / overlay / mask / sticky / scroll
+- hit area / click not working / clipped dropdown / image sizing / shared styles
+- “改样式” / “布局乱了” / “弹层被截断” / “点击失效” / “滚动条没了”
+- “内容被裁掉” / “卡片布局” / “改这个容器影响其他地方”
 
 典型请求：
 

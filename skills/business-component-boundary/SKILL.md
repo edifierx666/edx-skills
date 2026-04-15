@@ -1,6 +1,6 @@
 ---
 name: business-component-boundary
-description: Use when deciding whether code should be a page-local business component, a generic shared component, local state, domain store state, or an event-driven/strategy-based boundary, especially during new feature work or component refactors.
+description: "Use when frontend work touches component splitting, page-local vs shared components, props drilling, shared state, store ownership, hooks, side effects, event bus, strategy patterns, or questions like 组件该不该抽出去, 状态放哪, 业务组件还是通用组件, 深层组件怎么解耦, 大 switch 拆不拆."
 ---
 
 # Business Component Boundary
@@ -18,6 +18,15 @@ description: Use when deciding whether code should be a page-local business comp
 ## When to Use
 
 Use when building or refactoring pages, modules, components, stores, or interaction flows where component responsibility, state ownership, and decoupling boundaries are the main architectural questions.
+
+Trigger phrases include:
+
+- component boundary / component responsibility / state ownership
+- split component / extract component / shared component / business component
+- props drilling / lifting state / local state / global store / domain store
+- event bus / observer / strategy pattern / decouple nested components
+- “组件怎么拆” / “组件该不该抽出去” / “业务组件还是通用组件”
+- “状态放本地还是 store” / “多个组件都在管状态” / “深层组件怎么解耦”
 
 典型请求：
 

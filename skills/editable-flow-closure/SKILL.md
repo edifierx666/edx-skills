@@ -1,6 +1,6 @@
 ---
 name: editable-flow-closure
-description: Use when an editable form, editable detail view, modal, drawer, inline-edit table, toggle, or settings flow must support save, submit, update, or autosave with complete feedback instead of static rendering only.
+description: "Use when UI lets users edit data and must save, submit, update, autosave, validate, show loading/errors/success, prevent duplicate submit, refresh state, or close modal/drawer only after success; trigger for 表单保存, 编辑详情, 行内编辑, 开关即时提交, 保存反馈, 静态页面补保存."
 ---
 
 # Editable Flow Closure
@@ -16,6 +16,14 @@ description: Use when an editable form, editable detail view, modal, drawer, inl
 ## When to Use
 
 Use when the main problem is completing an edit-to-save loop.
+
+Trigger phrases include:
+
+- edit form / editable detail / settings form / modal / drawer / inline edit / toggle
+- save / submit / update / autosave / dirty state / validation / loading / feedback
+- duplicate submit / optimistic update / rollback / refresh after save / close on success
+- “可编辑并保存” / “表单提交” / “弹窗保存” / “行内编辑保存” / “开关即时提交”
+- “保存失败提示” / “成功后刷新” / “只画了页面还没接保存”
 
 典型请求：
 

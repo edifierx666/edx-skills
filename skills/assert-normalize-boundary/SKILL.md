@@ -1,6 +1,6 @@
 ---
 name: assert-normalize-boundary
-description: Use when dirty input, scattered null checks, inline type coercion, or multi-source payload fallbacks should be pulled into assert/normalize functions at the boundary instead of leaking into business logic.
+description: "Use when dirty API/input data, null checks, optional chaining fallbacks, type coercion, default values, adapter/builder payload assembly, assert/normalize functions, or UI empty-value fallback should be centralized at boundaries; trigger for 到处判空, 脏数据, payload 单一来源, 收口."
 ---
 
 # Assert Normalize Boundary
@@ -21,6 +21,14 @@ description: Use when dirty input, scattered null checks, inline type coercion, 
 ## When to Use
 
 Use when the main problem is boundary cleanup rather than feature delivery itself.
+
+Trigger phrases include:
+
+- dirty input / boundary / normalize / assert / adapter / builder / payload
+- null check / optional chaining / fallback / default value / type coercion
+- API response cleanup / single source of truth / UI empty state fallback
+- “到处判空” / “接口返回很脏” / “收口一下” / “补 assert normalize”
+- “payload 单一来源” / “不要 UI 自己兜底” / “把临时 fallback 提到边界层”
 
 典型请求：
 

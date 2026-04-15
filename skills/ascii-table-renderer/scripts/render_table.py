@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass, replace
 from io import StringIO
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Literal, Mapping, Sequence, cast
 
 from rich import box as rich_box
 from rich import cells
@@ -18,12 +18,15 @@ from rich.table import Table
 from rich.text import Text
 
 
+AlignValue = Literal["left", "center", "right"]
 ALIGN_OPTIONS = {"left", "center", "right"}
 DEFAULT_MAX_WIDTH = 100
 DEFAULT_PADDING = (0, 1)
 DEFAULT_BOX_NAME = "rounded"
+ASCII_BOX_NAME = "ascii"
 DEFAULT_PRIORITY = 100
 DEFAULT_TERMINAL_WIDTH_FALLBACK = 100
+DEFAULT_CJK_SAFE = True
 NATURAL_BREAK_CHARS = {" ", "\t", "/", "\\", "-", "_", "."}
 
 
@@ -52,6 +55,7 @@ class TableOptions:
     show_lines: bool
     padding: tuple[int, int]
     terminal_width_fallback: int
+    cjk_safe: bool
 
 
 @dataclass(frozen=True)
@@ -60,7 +64,7 @@ class ColumnSpec:
 
     key: str
     header: str
-    align: str
+    align: AlignValue
     min_width: int | None
     max_width: int | None
     priority: int
@@ -90,7 +94,9 @@ def parse_args(argv: Sequence[str] | None = None) -> CliOverrides:
     parser.add_argument("--json-path")
     args = parser.parse_args(argv)
     return CliOverrides(
-        max_width=_validate_positive_int(args.max_width, "max-width") if args.max_width is not None else None,
+        max_width=_validate_positive_int(args.max_width, "max-width")
+        if args.max_width is not None
+        else None,
         box_name=args.box,
         show_header=False if args.no_header else None,
         json_path=Path(args.json_path) if args.json_path else None,
@@ -176,6 +182,10 @@ def _normalize_options(raw_options: Any, cli: CliOverrides) -> TableOptions:
     if not isinstance(show_lines, bool):
         raise RendererError("show_lines must be a boolean")
 
+    cjk_safe = raw_options.get("cjk_safe", DEFAULT_CJK_SAFE)
+    if not isinstance(cjk_safe, bool):
+        raise RendererError("cjk_safe must be a boolean")
+
     padding = _normalize_padding(raw_options.get("padding", DEFAULT_PADDING))
     terminal_width_fallback = _validate_positive_int(
         raw_options.get("terminal_width_fallback", DEFAULT_TERMINAL_WIDTH_FALLBACK),
@@ -197,7 +207,9 @@ def _normalize_options(raw_options: Any, cli: CliOverrides) -> TableOptions:
     if cli.show_header is not None:
         show_header = cli.show_header
 
-    max_width = _resolve_target_width(cli.max_width, option_max_width, terminal_width_fallback)
+    max_width = _resolve_target_width(
+        cli.max_width, option_max_width, terminal_width_fallback
+    )
     return TableOptions(
         max_width=max_width,
         box_name=box_name,
@@ -206,6 +218,7 @@ def _normalize_options(raw_options: Any, cli: CliOverrides) -> TableOptions:
         show_lines=show_lines,
         padding=padding,
         terminal_width_fallback=terminal_width_fallback,
+        cjk_safe=cjk_safe,
     )
 
 
@@ -268,7 +281,10 @@ def _normalize_columns(raw_columns: Any, show_header: bool) -> list[ColumnSpec]:
 
         align = raw_column.get("align", "left")
         if align not in ALIGN_OPTIONS:
-            raise RendererError(f"columns[{index}].align must be one of {sorted(ALIGN_OPTIONS)}")
+            raise RendererError(
+                f"columns[{index}].align must be one of {sorted(ALIGN_OPTIONS)}"
+            )
+        align = cast(AlignValue, align)
 
         priority = raw_column.get("priority", DEFAULT_PRIORITY)
         priority = _validate_int(priority, f"columns[{index}].priority")
@@ -338,7 +354,10 @@ def _measure_multiline_width(text: str) -> int:
 def _character_cell_width(char: str) -> int:
     """Measure one character width with a fallback for the stub Rich module."""
 
-    get_character_cell_size = getattr(cells, "get_character_cell_size", None)
+    get_character_cell_size = cast(
+        Callable[[str], int] | None,
+        getattr(cells, "get_character_cell_size", None),
+    )
     if callable(get_character_cell_size):
         return int(get_character_cell_size(char))
     return max(1, _measure_line_width(char))
@@ -349,6 +368,54 @@ def _minimum_render_width(text: str) -> int:
 
     max_char_width = max((_character_cell_width(char) for char in text), default=1)
     return max(1, max_char_width)
+
+
+def _text_contains_wide_glyph(text: str) -> bool:
+    """Return whether text contains any double-width glyphs."""
+
+    return any(_character_cell_width(char) > 1 for char in text)
+
+
+def _resolve_ascii_box() -> rich_box.Box | None:
+    """Resolve Rich's ASCII box if the active Rich implementation exposes it."""
+
+    candidate = getattr(rich_box, "ASCII", None)
+    if isinstance(candidate, rich_box.Box):
+        return candidate
+    return None
+
+
+def _should_use_ascii_box(
+    options: TableOptions,
+    columns: Sequence[ColumnSpec],
+    rows: Sequence[Sequence[str]],
+) -> bool:
+    """Decide whether wide glyph content should force ASCII borders for alignment safety."""
+
+    if not options.cjk_safe:
+        return False
+    if getattr(options.box_style, "ascii", False):
+        return False
+    if options.show_header and any(
+        _text_contains_wide_glyph(column.header) for column in columns
+    ):
+        return True
+    return any(_text_contains_wide_glyph(cell) for row in rows for cell in row)
+
+
+def _apply_cjk_safe_box(
+    options: TableOptions,
+    columns: Sequence[ColumnSpec],
+    rows: Sequence[Sequence[str]],
+) -> TableOptions:
+    """Switch to ASCII borders when wide glyph content would make Unicode boxes drift."""
+
+    if not _should_use_ascii_box(options, columns, rows):
+        return options
+    ascii_box = _resolve_ascii_box()
+    if ascii_box is None:
+        return options
+    return replace(options, box_name=ASCII_BOX_NAME, box_style=ascii_box)
 
 
 def _prepare_columns(
@@ -366,7 +433,9 @@ def _prepare_columns(
         for index, column in enumerate(columns):
             text = _stringify_value(row.get(column.key))
             normalized_row.append(text)
-            content_widths[index] = max(content_widths[index], _measure_multiline_width(text))
+            content_widths[index] = max(
+                content_widths[index], _measure_multiline_width(text)
+            )
             render_width_requirements[index] = max(
                 render_width_requirements[index],
                 _minimum_render_width(text),
@@ -399,7 +468,9 @@ def _prepare_columns(
 
         minimum_render_width = render_width_requirements[index]
         if show_header:
-            minimum_render_width = max(minimum_render_width, _minimum_render_width(column.header))
+            minimum_render_width = max(
+                minimum_render_width, _minimum_render_width(column.header)
+            )
         render_width = max(assigned_width, minimum_render_width)
 
         prepared.append(
@@ -418,7 +489,9 @@ def _prepare_columns(
     return prepared, normalized_rows
 
 
-def _build_measurement_table(columns: Sequence[PreparedColumn], options: TableOptions) -> Table:
+def _build_measurement_table(
+    columns: Sequence[PreparedColumn], options: TableOptions
+) -> Table:
     """Build a table with configured widths for measurement."""
 
     table = Table(
@@ -431,7 +504,7 @@ def _build_measurement_table(columns: Sequence[PreparedColumn], options: TableOp
     for column in columns:
         table.add_column(
             column.spec.header,
-            justify=column.spec.align,
+            justify=cast(AlignValue, column.spec.align),
             width=column.render_width,
             overflow="fold",
             no_wrap=False,
@@ -439,16 +512,24 @@ def _build_measurement_table(columns: Sequence[PreparedColumn], options: TableOp
     return table
 
 
-def _measure_table_width(columns: Sequence[PreparedColumn], options: TableOptions) -> int:
+def _measure_table_width(
+    columns: Sequence[PreparedColumn], options: TableOptions
+) -> int:
     """Measure the rendered table width using Rich."""
 
     table = _build_measurement_table(columns, options)
-    console_width = max(options.max_width, sum(column.assigned_width for column in columns) + 32)
-    console = Console(width=console_width, markup=False, color_system=None, force_terminal=False)
+    console_width = max(
+        options.max_width, sum(column.assigned_width for column in columns) + 32
+    )
+    console = Console(
+        width=console_width, markup=False, color_system=None, force_terminal=False
+    )
     return console.measure(table).maximum
 
 
-def _compress_columns(columns: Sequence[PreparedColumn], options: TableOptions) -> tuple[list[PreparedColumn], int]:
+def _compress_columns(
+    columns: Sequence[PreparedColumn], options: TableOptions
+) -> tuple[list[PreparedColumn], int]:
     """Shrink columns until the table fits or every column hits its minimum."""
 
     compressed = list(columns)
@@ -548,7 +629,9 @@ def _render_table(
     if not rows and not options.show_header:
         return ""
 
-    render_width = options.max_width if table_width <= options.max_width else table_width
+    render_width = (
+        options.max_width if table_width <= options.max_width else table_width
+    )
     buffer = StringIO()
     console = Console(
         file=buffer,
@@ -569,7 +652,7 @@ def _render_table(
         header = Text(wrap_cell_text(column.spec.header, column.render_width))
         table.add_column(
             header,
-            justify=column.spec.align,
+            justify=cast(AlignValue, column.spec.align),
             width=column.render_width,
             overflow="fold",
             no_wrap=False,
@@ -594,7 +677,10 @@ def render_payload(payload: Mapping[str, Any], cli: CliOverrides) -> str:
     if "rows" not in payload:
         raise RendererError("rows field is required")
     rows = _normalize_rows(payload["rows"])
-    prepared_columns, normalized_rows = _prepare_columns(columns, rows, options.show_header)
+    prepared_columns, normalized_rows = _prepare_columns(
+        columns, rows, options.show_header
+    )
+    options = _apply_cjk_safe_box(options, columns, normalized_rows)
     prepared_columns, table_width = _compress_columns(prepared_columns, options)
     return _render_table(prepared_columns, normalized_rows, options, table_width)
 

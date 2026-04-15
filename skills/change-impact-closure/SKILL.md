@@ -1,6 +1,6 @@
 ---
 name: change-impact-closure
-description: Use when changing shared code, schemas, stores, payloads, utilities, contracts, or base abstractions where upstream and downstream impact must be traced and closed across the full chain.
+description: "Use when a change may affect callers, consumers, schemas, stores, shared utils, payload builders, API contracts, base components, CSS hooks, or upstream/downstream chains; trigger for 字段改名, 契约变化, 公共方法改签名, store 重构, payload 变更, 别影响上层, 全链路收口."
 ---
 
 # Change Impact Closure
@@ -14,6 +14,14 @@ description: Use when changing shared code, schemas, stores, payloads, utilities
 ## When to Use
 
 Use when modifying a shared or foundational element whose effects may propagate through upstream and downstream consumers.
+
+Trigger phrases include:
+
+- impact / blast radius / caller / consumer / upstream / downstream
+- shared util / helper / base component / public contract / schema / payload builder
+- rename field / change signature / store refactor / API contract changed
+- “这个字段名换掉” / “改公共方法” / “调用方一起改” / “别影响上层”
+- “改完这层上下游怎么收口” / “全链路检查” / “哪里会断”
 
 典型请求：
 

@@ -52,7 +52,9 @@ def run_renderer_from_json_path(payload, *args):
         root = Path(tmpdir)
         _install_rich_stub(root)
         payload_path = root / "payload.json"
-        payload_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        payload_path.write_text(
+            json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+        )
         env = os.environ.copy()
         pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
@@ -88,7 +90,7 @@ def _rich_stub_files():
             "        self.name = name\n"
             "\n"
             "\n"
-            "ROUNDED = Box(\"rounded\")\n"
+            'ROUNDED = Box("rounded")\n'
         ),
         "cells.py": (
             "def cell_len(text):\n"
@@ -99,11 +101,11 @@ def _rich_stub_files():
             "    text = str(text)\n"
             "    if width < 1:\n"
             "        return [text]\n"
-            "    return [text[index:index + width] for index in range(0, len(text), width)] or [\"\"]\n"
+            '    return [text[index:index + width] for index in range(0, len(text), width)] or [""]\n'
         ),
         "text.py": (
             "class Text(str):\n"
-            "    def __new__(cls, value=\"\"):\n"
+            '    def __new__(cls, value=""):\n'
             "        return super().__new__(cls, str(value))\n"
         ),
         "console.py": (
@@ -125,7 +127,7 @@ def _rich_stub_files():
             "\n"
             "    def print(self, table):\n"
             "        self.file.write(table.render())\n"
-            "        self.file.write(\"\\n\")\n"
+            '        self.file.write("\\n")\n'
         ),
         "table.py": (
             "class Table:\n"
@@ -137,12 +139,12 @@ def _rich_stub_files():
             "        self.columns = []\n"
             "        self.rows = []\n"
             "\n"
-            "    def add_column(self, header=\"\", justify=\"left\", width=None, overflow=\"fold\", no_wrap=False):\n"
+            '    def add_column(self, header="", justify="left", width=None, overflow="fold", no_wrap=False):\n'
             "        self.columns.append(\n"
             "            {\n"
-            "                \"header\": str(header),\n"
-            "                \"justify\": justify,\n"
-            "                \"width\": int(width or 0),\n"
+            '                "header": str(header),\n'
+            '                "justify": justify,\n'
+            '                "width": int(width or 0),\n'
             "            }\n"
             "        )\n"
             "\n"
@@ -155,50 +157,50 @@ def _rich_stub_files():
             "\n"
             "    def render(self):\n"
             "        if not self.columns:\n"
-            "            return \"\"\n"
+            '            return ""\n'
             "\n"
             "        lines = []\n"
-            "        lines.append(self._rule(\"╭\", \"┬\", \"╮\", \"─\"))\n"
+            '        lines.append(self._rule("╭", "┬", "╮", "─"))\n'
             "        if self.show_header:\n"
-            "            lines.extend(self._render_row([column[\"header\"] for column in self.columns]))\n"
-            "            lines.append(self._rule(\"├\", \"┼\", \"┤\", \"─\"))\n"
+            '            lines.extend(self._render_row([column["header"] for column in self.columns]))\n'
+            '            lines.append(self._rule("├", "┼", "┤", "─"))\n'
             "        for index, row in enumerate(self.rows):\n"
             "            lines.extend(self._render_row(row))\n"
             "            if self.show_lines and index != len(self.rows) - 1:\n"
-            "                lines.append(self._rule(\"├\", \"┼\", \"┤\", \"─\"))\n"
-            "        lines.append(self._rule(\"╰\", \"┴\", \"╯\", \"─\"))\n"
-            "        return \"\\n\".join(lines)\n"
+            '                lines.append(self._rule("├", "┼", "┤", "─"))\n'
+            '        lines.append(self._rule("╰", "┴", "╯", "─"))\n'
+            '        return "\\n".join(lines)\n'
             "\n"
             "    def _rule(self, left, middle, right, fill):\n"
             "        horizontal = self.padding[1] * 2\n"
-            "        parts = [fill * (column[\"width\"] + horizontal) for column in self.columns]\n"
+            '        parts = [fill * (column["width"] + horizontal) for column in self.columns]\n'
             "        return left + middle.join(parts) + right\n"
             "\n"
             "    def _render_row(self, values):\n"
-            "        height = max(len(str(value).split(\"\\n\")) for value in values) if values else 1\n"
+            '        height = max(len(str(value).split("\\n")) for value in values) if values else 1\n'
             "        rendered = []\n"
             "        for line_index in range(height):\n"
             "            cells = []\n"
             "            for column, raw_value in zip(self.columns, values):\n"
-            "                segments = str(raw_value).split(\"\\n\")\n"
-            "                segment = segments[line_index] if line_index < len(segments) else \"\"\n"
+            '                segments = str(raw_value).split("\\n")\n'
+            '                segment = segments[line_index] if line_index < len(segments) else ""\n'
             "                cells.append(\n"
-            "                    \" \" * self.padding[1]\n"
-            "                    + self._justify(segment, column[\"width\"], column[\"justify\"])\n"
-            "                    + \" \" * self.padding[1]\n"
+            '                    " " * self.padding[1]\n'
+            '                    + self._justify(segment, column["width"], column["justify"])\n'
+            '                    + " " * self.padding[1]\n'
             "                )\n"
-            "            rendered.append(\"│\" + \"│\".join(cells) + \"│\")\n"
+            '            rendered.append("│" + "│".join(cells) + "│")\n'
             "        return rendered\n"
             "\n"
             "    def _justify(self, text, width, mode):\n"
             "        text = str(text)\n"
             "        extra = max(0, width - len(text))\n"
-            "        if mode == \"right\":\n"
-            "            return \" \" * extra + text\n"
-            "        if mode == \"center\":\n"
+            '        if mode == "right":\n'
+            '            return " " * extra + text\n'
+            '        if mode == "center":\n'
             "            left = extra // 2\n"
-            "            return \" \" * left + text + \" \" * (extra - left)\n"
-            "        return text + \" \" * extra\n"
+            '            return " " * left + text + " " * (extra - left)\n'
+            '        return text + " " * extra\n'
         ),
     }
 
@@ -249,8 +251,20 @@ class RichRendererRegressionTests(unittest.TestCase):
     def test_real_rich_keeps_double_width_character_in_narrow_column(self):
         payload = {
             "columns": [
-                {"key": "wide", "header": "Wide", "min_width": 1, "max_width": 1, "priority": 200},
-                {"key": "other", "header": "Other", "min_width": 1, "max_width": 1, "priority": 100},
+                {
+                    "key": "wide",
+                    "header": "Wide",
+                    "min_width": 1,
+                    "max_width": 1,
+                    "priority": 200,
+                },
+                {
+                    "key": "other",
+                    "header": "Other",
+                    "min_width": 1,
+                    "max_width": 1,
+                    "priority": 100,
+                },
             ],
             "rows": [{"wide": "好", "other": "x"}],
             "options": {"max_width": 10, "box": "rounded"},
@@ -261,13 +275,69 @@ class RichRendererRegressionTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("好", result.stdout)
 
+    @unittest.skipUnless(REAL_RICH_AVAILABLE, "real rich is not available")
+    def test_real_rich_uses_ascii_box_for_cjk_content_by_default(self):
+        payload = {
+            "columns": [
+                {"key": "pkg", "header": "包名"},
+                {"key": "usage", "header": "用途", "max_width": 18},
+            ],
+            "rows": [
+                {"pkg": "ol", "usage": "OpenLayers 地图库"},
+                {"pkg": "ol-ext", "usage": "OpenLayers 扩展插件"},
+            ],
+            "options": {"max_width": 40, "box": "rounded", "show_lines": True},
+        }
+
+        result = run_renderer_real_rich(payload)
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("+", result.stdout)
+        self.assertIn("|", result.stdout)
+        self.assertNotIn("╭", result.stdout)
+        self.assertNotIn("│", result.stdout)
+
+    @unittest.skipUnless(REAL_RICH_AVAILABLE, "real rich is not available")
+    def test_real_rich_can_keep_unicode_box_when_cjk_safe_disabled(self):
+        payload = {
+            "columns": [
+                {"key": "pkg", "header": "包名"},
+                {"key": "usage", "header": "用途", "max_width": 18},
+            ],
+            "rows": [
+                {"pkg": "ol", "usage": "OpenLayers 地图库"},
+            ],
+            "options": {
+                "max_width": 40,
+                "box": "rounded",
+                "show_lines": True,
+                "cjk_safe": False,
+            },
+        }
+
+        result = run_renderer_real_rich(payload)
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("╭", result.stdout)
+        self.assertIn("│", result.stdout)
+
     def test_renders_new_columns_rows_options_contract(self):
         payload = {
             "columns": [
                 {"key": "name", "header": "Name"},
-                {"key": "desc", "header": "Description", "min_width": 8, "priority": 200},
+                {
+                    "key": "desc",
+                    "header": "Description",
+                    "min_width": 8,
+                    "priority": 200,
+                },
             ],
-            "rows": [{"name": "alpha", "desc": "long text that should wrap instead of truncate"}],
+            "rows": [
+                {
+                    "name": "alpha",
+                    "desc": "long text that should wrap instead of truncate",
+                }
+            ],
             "options": {"max_width": 36, "box": "rounded"},
         }
 
@@ -283,7 +353,12 @@ class RichRendererRegressionTests(unittest.TestCase):
         payload = {
             "columns": [
                 {"key": "title", "header": "Title", "min_width": 8},
-                {"key": "details", "header": "Details", "min_width": 10, "priority": 200},
+                {
+                    "key": "details",
+                    "header": "Details",
+                    "min_width": 10,
+                    "priority": 200,
+                },
             ],
             "rows": [{"title": "sample", "details": details}],
             "options": {"max_width": 34},
@@ -292,7 +367,9 @@ class RichRendererRegressionTests(unittest.TestCase):
         result = run_renderer(payload)
         non_empty_lines = [line for line in result.stdout.splitlines() if line.strip()]
         detail_lines = [
-            line for line in non_empty_lines if any(word in line.lower() for word in ("this", "sentence", "inside"))
+            line
+            for line in non_empty_lines
+            if any(word in line.lower() for word in ("this", "sentence", "inside"))
         ]
 
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -304,7 +381,9 @@ class RichRendererRegressionTests(unittest.TestCase):
         )
         self.assertGreaterEqual(len(detail_lines), 2, msg=result.stdout)
         for line in non_empty_lines:
-            self.assertLessEqual(len(line), 34, msg=f"line exceeds max_width: {line!r}\n{result.stdout}")
+            self.assertLessEqual(
+                len(line), 34, msg=f"line exceeds max_width: {line!r}\n{result.stdout}"
+            )
 
     def test_preserves_literal_markup_and_json_stringifies_structured_values(self):
         payload = {
@@ -356,7 +435,10 @@ class RichRendererRegressionTests(unittest.TestCase):
         result = run_renderer(payload)
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertRegex(result.stderr.lower(), r"(rows.*(required|missing))|((required|missing).*rows)")
+        self.assertRegex(
+            result.stderr.lower(),
+            r"(rows.*(required|missing))|((required|missing).*rows)",
+        )
 
     def test_returns_empty_output_for_empty_rows_without_header(self):
         payload = {

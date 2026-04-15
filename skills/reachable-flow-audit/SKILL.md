@@ -1,6 +1,6 @@
 ---
 name: reachable-flow-audit
-description: Use when checking whether a branch, handler, route, effect, callback, or scheduled task is actually executed, or when the user asks which parts of a call chain are truly reachable vs dead or conditional.
+description: "Use when verifying whether code actually executes: branch, handler, click callback, hook/effect, route, request, cron, worker, listener, feature flag, guard, or call chain reachability; trigger for 会不会执行, 有没有触发, 请求发没发, handler 走没走, 死代码, 条件可达."
 ---
 
 # Reachable Flow Audit
@@ -16,6 +16,14 @@ description: Use when checking whether a branch, handler, route, effect, callbac
 ## When to Use
 
 Use when the user wants to verify whether a path, branch, handler, hook, route, task, callback, request path, or runtime branch is actually reachable.
+
+Trigger phrases include:
+
+- reachable / unreachable / dead code / call chain / entry point / guard / feature flag
+- handler / callback / effect / hook / route / request / listener / worker / cron
+- click not firing / submit not firing / request not sent / branch not hit
+- “这段会不会执行” / “有没有触发” / “handler 走没走” / “请求发没发”
+- “是不是死代码” / “调用链断在哪” / “这个分支当前配置会不会进”
 
 典型请求：
 
