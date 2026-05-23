@@ -1,0 +1,41 @@
+{
+  "skill_name": "api-field-contract-guard",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "你在一个 React + TypeScript 项目里看到接口类型 UserResponse 只有 id: string 和 name: string。产品让你把用户列表卡片加上头像、部门、最后登录时间，并先给出实现方案。请说明你会怎么处理字段。",
+      "expected_output": "应该明确 id/name 是已确认字段；avatarUrl/department/lastLoginTime 是业务需要但接口未确认字段；不能直接写进正式类型或代码；需要输出字段缺口和后端确认建议。",
+      "files": [],
+      "expectations": [
+        "输出明确引用 UserResponse 类型作为 id/name 的来源。",
+        "输出将 avatarUrl、department、lastLoginTime 标为未确认或推测字段，而不是接口已返回字段。",
+        "输出明确说明不会把未确认字段直接写进正式类型或核心代码。",
+        "输出包含后端字段补齐或待确认建议。"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "我把旧的订单列表接口迁到新接口了。旧代码用 creatorName、status、totalCount，新接口文档只写了 orderId、amount、createdAt。请帮我做一次风险审计，看看哪些 UI 会退化。",
+      "expected_output": "应该做旧字段反向缺口审计，区分新接口已确认字段和旧逻辑缺失字段，指出 creatorName/status/totalCount 分别影响创建人列、状态展示和分页。",
+      "files": [],
+      "expectations": [
+        "输出明确列出新接口已确认字段 orderId、amount、createdAt，并说明来源是新接口文档。",
+        "输出将 creatorName、status、totalCount 标为旧代码使用但新接口未确认字段。",
+        "输出分别说明 creatorName、status、totalCount 会造成的 UI 或行为退化。",
+        "输出给出恢复字段、隐藏功能或调整产品方案等处理建议。"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "后端还没给完整字段，但我想先做详情页 UI。当前 DTO 确认有 title?: string 和 description?: string，没有 coverUrl 和 ownerAvatar。可以先用可选链加默认图兜底吗？给我建议。",
+      "expected_output": "应该允许 title/description 按 optional 处理，但不允许 coverUrl/ownerAvatar 用可选链默认图伪装成接口字段；如必须占位，应局部化并加中文 TODO/FIXME。",
+      "files": [],
+      "expectations": [
+        "输出区分 title/description 是 DTO 已确认 optional 字段，coverUrl/ownerAvatar 未确认。",
+        "输出明确反对对 coverUrl/ownerAvatar 使用可选链加默认图来掩盖契约缺失。",
+        "输出建议如需占位应局部化处理。",
+        "输出要求使用中文 TODO 或 FIXME 标注字段待确认。"
+      ]
+    }
+  ]
+}
