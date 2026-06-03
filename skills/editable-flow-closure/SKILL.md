@@ -1,6 +1,6 @@
 ---
 name: editable-flow-closure
-description: "Use when UI lets users edit data and must save, submit, update, autosave, validate, show loading/errors/success, prevent duplicate submit, refresh state, or close modal/drawer only after success; trigger for 表单保存, 编辑详情, 行内编辑, 开关即时提交, 保存反馈, 静态页面补保存."
+description: "Use when UI lets users edit data and must save, submit, update, autosave, validate, show loading/errors/success, prevent duplicate submit, handle race conditions safely, refresh state, or close modal/drawer only after success; trigger for 表单保存, 编辑详情, 行内编辑, 开关即时提交, 保存反馈, 静态页面补保存, 请求防竞态."
 ---
 
 # Editable Flow Closure
@@ -11,7 +11,7 @@ description: "Use when UI lets users edit data and must save, submit, update, au
 
 只要用户能修改数据，就应该按完整闭环交付：**展示 -> 交互 -> 校验 -> 提交保存 -> 状态反馈**。
 
-这个 skill 用来阻止“只做静态渲染、不接保存链路、不补反馈收口”的半成品实现。
+这个 skill 用来阻止“只做静态渲染、不接保存链路、不补反馈收口、不防竞态导致数据混乱”的半成品实现。
 
 ## When to Use
 
@@ -21,9 +21,10 @@ Trigger phrases include:
 
 - edit form / editable detail / settings form / modal / drawer / inline edit / toggle
 - save / submit / update / autosave / dirty state / validation / loading / feedback
-- duplicate submit / optimistic update / rollback / refresh after save / close on success
+- duplicate submit / optimistic update / rollback / refresh after save / close on success / race condition
 - “可编辑并保存” / “表单提交” / “弹窗保存” / “行内编辑保存” / “开关即时提交”
 - “保存失败提示” / “成功后刷新” / “只画了页面还没接保存”
+- “多次点击数据错乱” / “快速切换 Tab 渲染旧数据”
 
 典型请求：
 
@@ -34,7 +35,7 @@ Trigger phrases include:
 - “这个开关改了就要即时提交”
 - “先做个可联调的保存占位”
 - “这个 modal 里改完后要保存，失败要提示，成功再关闭”
-- “这个 autosave 表单要有 loading、校验和保存反馈”
+- “这个 autosave 表单要有 loading、校验、保存反馈和防竞态处理”
 
 Do not use as the primary skill for:
 
@@ -50,7 +51,7 @@ Do not use as the primary skill for:
 - 主问题是“边界层怎么收口脏输入 / payload” → `assert-normalize-boundary`
 - 如果保存链路已存在，只是在清理 payload、判空或 builder，也切到 `assert-normalize-boundary`
 - 若当前首要问题是点击后有没有触发提交、请求有没有发出、autosave / blur 是否真的执行，先切给 `reachable-flow-audit`
-- 主问题是“编辑动作怎么完成保存闭环” → 本 skill
+- 主问题是“编辑动作怎么完成保存闭环及数据稳定性” → 本 skill
 
 ## Core Rule
 
@@ -59,7 +60,7 @@ Do not use as the primary skill for:
 1. **展示当前值**
 2. **承接用户修改**
 3. **提交前校验**
-4. **触发保存 / 更新 / 自动提交**
+4. **触发保存 / 更新 / 自动提交（含纯逻辑防竞态）**
 5. **给出保存后的反馈与状态闭环**
 
 少任何一段，都不是完整交付。
@@ -70,7 +71,7 @@ Do not use as the primary skill for:
 
 - 用户改完后，点击哪个按钮或动作触发保存？
 - 提交参数包含哪些字段？每个字段来源是否唯一明确？
-- 保存成功后，页面应该发生什么变化？
+- 保存成功后，页面应该发生什么变化？是否考虑了快速连续操作带来的脏数据覆盖风险？
 
 如果这三个问题答不出来，不要直接开始堆界面代码。
 
@@ -96,12 +97,15 @@ Do not use as the primary skill for:
 - 校验规则尽量贴近边界，不要散在多个按钮回调里
 - 不要让错误状态只存在于控制台或内部状态而没有用户可感知反馈
 
-### 4. Submit Mechanism
+### 4. Submit Mechanism (含时序与竞态控制)
 
 - 明确提交机制：保存按钮、blur/enter 提交、toggle 即时提交，或 autosave
-- 提交期间要有 loading 或重复提交控制
 - 请求参数应由 builder / adapter 组装，不要直接把视图状态整包乱传
 - 如果是即时提交，必须考虑失败后的状态恢复或回滚策略
+- **强制实现纯逻辑防竞态（Race Condition）防御，确保 UI 渲染数据正确**：
+  - **数据时序校验（核心要求）**：通过引入局部自增标记（如 `const reqId = ++currentRequestId`），在异步回调首行拦截 `if (reqId !== currentRequestId) return;`，仅处理最新响应。
+  - **不强制要求中断请求**：不需要必须使用 `AbortController` 取消上一次的网络请求，只要通过上述校验等纯逻辑手段，保证最终赋值、渲染给 UI 的是正确的最新数据即可。
+- **视觉隔离原则**：防竞态处理只允许在数据流逻辑层做防御，**绝对禁止**擅自修改或添加用户未明确要求的 UI 视觉交互（如为了防重复提交强行加一个 UI 没有设计的 Loading 遮罩或 disabled 属性）。如果 UI 已有 loading 则复用，没有则保持纯逻辑拦截。
 
 ### 5. Closure
 
@@ -112,17 +116,17 @@ Do not use as the primary skill for:
 - 刷新详情数据或列表
 - 或把本地 canonical state 更新到最新值
 - 只有在语义合理时才关闭弹窗 / Drawer
+- 更新状态前确保组件未卸载，且满足时序校验（匹配 Request ID）。
 
 ## If The Real API Is Missing
 
 如果真实保存接口还没给出：
 
 - 主动提供基础的 `handleSave` 或等价提交占位
-- 可以带 loading 与简单的重复提交保护
-- 在合适场景下可加入简单防抖
+- 提供基于 `Request ID` 等逻辑的时序安全 / 防竞态占位
 - 使用 `// TODO: 接入真实的保存接口` 明确占位
 
-重点是先把闭环搭起来，方便后续联调，而不是停在“先画界面”。
+重点是先把闭环和时序安全搭起来，方便后续联调，而不是停在“先画界面”。
 
 ## Request And State Separation
 
@@ -136,7 +140,8 @@ Do not use as the primary skill for:
 
 - 严禁停留在静态渲染，不接保存链路
 - 严禁用户能编辑，但没有明确提交机制
-- 严禁提交时没有 loading / 重复点击控制
+- 严禁在异步回调中不做时序校验，导致快速操作引发的数据竞态和渲染混乱
+- 严禁为了防竞态而擅自脑补、强加用户未要求的 UI 视觉表现（如擅自加 Loading 或全局置灰）
 - 严禁成功后没有反馈，也没有状态同步
 - 严禁失败后静默吞掉错误，让页面看起来像保存成功
 - 严禁把视图状态直接当服务端 payload 原样提交
@@ -151,7 +156,8 @@ Do not use as the primary skill for:
 2. 本地编辑态如何承接修改
 3. 提交前校验放在哪里
 4. 保存动作和 payload 如何组装
-5. 成功与失败后的收口动作是什么
+5. 如何在底层逻辑保证多次触发时的请求时序安全（确保最终渲染最新数据）
+6. 成功与失败后的收口动作是什么
 
 ## Output Checklist
 
@@ -160,6 +166,7 @@ Do not use as the primary skill for:
 - 是否覆盖了展示、交互、校验、提交、反馈五段闭环
 - 是否明确了保存触发点
 - 是否拆开了编辑态与最终 payload
+- **是否在纯逻辑层处理了异步防竞态（如时序 ID 校验）且未擅自污染 UI 视觉表现**
 - 是否给了成功 / 失败反馈策略
 - 是否说明了保存后的状态同步方式
 - 如果是真实 API 缺失，是否给了清晰的 mock save 占位
@@ -170,9 +177,11 @@ Do not use as the primary skill for:
 
 - “先把页面画出来，保存以后再说”
 - “先点按钮假装能提交”
+- “只管发请求不管竞态，用户点快了或切 Tab 后旧接口响应回来覆盖了新数据”
+- “为了防竞态，私自给用户的组件加了一堆他没要求的 isLoading 状态或 disabled 属性”
 - “成功后就改个本地变量，不管服务端状态”
 - “提交失败也别提示，免得打断流程”
 - “先把整份表单对象都传上去，后面再清理参数”
 - “用户改完数据后，界面看起来更新了，就算完成”
 
-这些都说明闭环没有真正完成，只是把编辑入口做出来了。
+这些都说明闭环没有真正完成，或者底层的时序逻辑存在严重隐患。
