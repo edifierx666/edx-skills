@@ -1,7 +1,6 @@
 ---
 name: blindspot-scan
 description: "Use when the user is unfamiliar with a domain, module, or codebase area they need to work in - e.g. '我对 X 不熟', '帮我找盲区', '不知道从哪下手', 'blindspot pass', or before writing requirements for unfamiliar territory. Scans for the user's unknown unknowns, teaches the minimum domain knowledge, and helps rewrite better requirements."
-version: "1.0.0"
 ---
 # 盲区扫描（Blindspot Scan）
 

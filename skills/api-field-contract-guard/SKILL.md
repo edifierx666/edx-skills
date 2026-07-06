@@ -1,7 +1,6 @@
 ---
 name: api-field-contract-guard
 description: Use this skill whenever a task touches API response fields, DTO/interface/type definitions, mock data, transformers/adapters, store data mapping, UI rendering from backend data, or questions like “接口返回了哪些字段”, “这个字段为什么为空”, “还需要后端补什么字段”, “根据接口改页面”, “字段对不上”, or “迁移/重构旧接口”. This skill prevents hallucinated API fields, separates confirmed facts from inferred gaps, and requires a field-source and gap-report workflow before code or recommendations.
-version: "1.0.0"
 ---
 
 # API Field Contract Guard
@@ -13,6 +12,8 @@ Use this skill to keep interface-driven work grounded in evidence. The model sho
 ## Core rule
 
 API fields must be evidence-backed. Business needs may be inferred, but inference must stay visibly separate from confirmed facts and must not become production code, formal DTOs, or authoritative documentation until the contract is confirmed.
+
+Priority over normalization: contract confirmation (fact layer) comes before normalize (structure layer). Unconfirmed fields go to the gap report and must never be added to `normalizeXxx` functions or given boundary defaults — that would launder "unknown contract" into "known field". Only confirmed-but-nullable or dirty fields are eligible for boundary normalization (see `assert-normalize-boundary`).
 
 ## Trigger checklist
 

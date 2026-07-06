@@ -39,9 +39,11 @@ Trigger phrases include:
 
 Do not use as the primary skill for:
 
-- 只读详情页
-- 搜索 / 筛选 / 查询表单
+- 只读详情页（例外见下）
+- 搜索 / 筛选 / 查询表单（例外见下）
 - 报表、监控、纯展示页面
+
+**只读流的防竞态例外**：即使页面是只读查询（筛选、Tab 切换、搜索、分页），只要问题是"快速操作后旧响应覆盖新数据 / 渲染错乱"，仍由本 skill 的时序校验规范（Request ID 拦截）主导。只豁免防竞态部分，不要求只读页补齐五段保存闭环。
 - 表单看起来没保存，但用户当前只是要证明 submit / handler 不可达
 - 用户明确要求只做静态原型、不接保存链路
 
@@ -51,6 +53,7 @@ Do not use as the primary skill for:
 - 主问题是“边界层怎么收口脏输入 / payload” → `assert-normalize-boundary`
 - 如果保存链路已存在，只是在清理 payload、判空或 builder，也切到 `assert-normalize-boundary`
 - 若当前首要问题是点击后有没有触发提交、请求有没有发出、autosave / blur 是否真的执行，先切给 `reachable-flow-audit`
+- 读操作的 loading / error / empty / 残缺数据四态渲染 → `async-state-completeness`；本 skill 只管写操作侧的闭环与竞态
 - 主问题是“编辑动作怎么完成保存闭环及数据稳定性” → 本 skill
 
 ## Core Rule

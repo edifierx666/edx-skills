@@ -45,6 +45,7 @@ Do not use as the primary skill for:
 
 - 主问题是“怎么工作” → `understanding-code-logic`
 - 主问题是“组件职责和状态归属” → `business-component-boundary`
+- 共享样式 / 类名改动后“哪些引用方要同步收口” → `change-impact-closure`；本 skill 只负责物理传播影响（截断、遮挡、滚动、点击），两者可同时触发
 - 主问题是“样式改动的物理影响和风控” → 本 skill
 
 ## Semantic Class Contract

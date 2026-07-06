@@ -1,7 +1,6 @@
 ---
 name: acceptance-quiz
 description: "Use before merging or accepting a large change the user didn't fully watch happen - e.g. '帮我理解这次改动', '出题考我', '验收一下', 'acceptance quiz', or after a long work session when the user wants to verify they understand what was built. Generates a change report plus a quiz the user must pass before merging."
-version: "1.0.0"
 ---
 # 验收考试（Acceptance Quiz）
 

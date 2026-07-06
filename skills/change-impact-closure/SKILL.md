@@ -46,6 +46,7 @@ Do not use as the primary skill for:
 - 主问题是“怎么工作” → `understanding-code-logic`
 - 主问题是“有没有执行 / 哪些节点真的会跑” → `reachable-flow-audit`
 - 主问题是“边界层如何收口脏输入” → `assert-normalize-boundary`
+- 公共样式改动的**物理布局影响**（截断、遮挡、滚动、点击失效）→ `layout-blast-radius-guard`；本 skill 只负责“谁引用了这个样式、哪些调用方要同步改”的链路收口，两者可同时触发
 - 主问题是“改一个共享点后，上下游谁必须一起收口” → 本 skill
 
 ## Core Principles
