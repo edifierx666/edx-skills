@@ -51,12 +51,12 @@ Do not use as the primary skill for:
 
 优先级规则：
 
-- 主问题是“怎么工作” → `understanding-code-logic`
-- 主问题是“编辑动作怎么形成保存闭环” → `editable-flow-closure`
-- 只要第一性问题是 submit / handler / effect / request 到底有没有执行，即使同时提到 payload、判空或 normalize，也先切给 `reachable-flow-audit`
-- 即使中途会补 assert / normalize，只要最终目标是完成编辑保存闭环，也由 `editable-flow-closure` 主导
-- 字段是否真实存在尚未确认（契约未确认）→ 先走 `api-field-contract-guard` 的缺口报告；normalize 只处理已确认但可空、脏、结构不稳的字段
-- 主问题是“页面有没有 loading / error / empty / 残缺数据的渲染分支” → `async-state-completeness`；本 skill 负责降级值在哪一层生成，分支存在性归那边
+- 主问题是“怎么工作” → `edx-understanding-code-logic`
+- 主问题是“编辑动作怎么形成保存闭环” → `edx-editable-flow-closure`
+- 只要第一性问题是 submit / handler / effect / request 到底有没有执行，即使同时提到 payload、判空或 normalize，也先切给 `edx-reachable-flow-audit`
+- 即使中途会补 assert / normalize，只要最终目标是完成编辑保存闭环，也由 `edx-editable-flow-closure` 主导
+- 字段是否真实存在尚未确认（契约未确认）→ 先走 `edx-api-field-contract-guard` 的缺口报告；normalize 只处理已确认但可空、脏、结构不稳的字段
+- 主问题是“页面有没有 loading / error / empty / 残缺数据的渲染分支” → `edx-async-state-completeness`；本 skill 负责降级值在哪一层生成，分支存在性归那边
 - 主问题是“边界层怎么收口脏输入” → 本 skill
 
 ## Core Philosophy

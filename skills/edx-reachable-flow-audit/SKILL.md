@@ -34,7 +34,7 @@ Do not use as the primary skill for:
 
 优先级规则：
 
-- 主问题是“模块怎么工作” → `understanding-code-logic`
+- 主问题是“模块怎么工作” → `edx-understanding-code-logic`
 - 主问题是“哪些节点真的会跑” → 本 skill
 - 只要第一性问题是“会不会执行 / 有没有入口 / 请求有没有真的发出”，即使场景发生在保存链路或 normalize 流程里，也优先由本 skill 主导
 - 若“调用时机 / 是否会被调用”只是为了辅助 payload、adapter、assert/normalize 重构，而主目标不是判定可达性，则不要抢走主导权
@@ -185,7 +185,7 @@ Do not use as the primary skill for:
 - 每个被剔除节点是否都说明了剔除原因
 - 条件分支是否都写清了触发主体、前置条件、导通路径
 - 主线结论里是否彻底清除了猜测和补脑
-- 如果用户后续想看整体业务流，是否明确建议切换到 `understanding-code-logic`
+- 如果用户后续想看整体业务流，是否明确建议切换到 `edx-understanding-code-logic`
 
 任一项未通过，回到对应节点重做三步验证（Entry / Chain / Guards），或把该节点降级到“条件分支 / 低可信补充”；不得在主线里留下未解决的验证缺口。
 

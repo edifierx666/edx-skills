@@ -48,11 +48,11 @@ Do not use as the primary skill for:
 
 优先级规则：
 
-- 主问题是“先看懂现有流程” → `understanding-code-logic`
-- 主问题是“边界层怎么收口脏输入 / payload” → `assert-normalize-boundary`
-- 如果保存链路已存在，只是在清理 payload、判空或 builder，也切到 `assert-normalize-boundary`
-- 若当前首要问题是点击后有没有触发提交、请求有没有发出、autosave / blur 是否真的执行，先切给 `reachable-flow-audit`
-- 读操作的 loading / error / empty / 残缺数据四态渲染 → `async-state-completeness`；本 skill 只管写操作侧的闭环与竞态
+- 主问题是“先看懂现有流程” → `edx-understanding-code-logic`
+- 主问题是“边界层怎么收口脏输入 / payload” → `edx-assert-normalize-boundary`
+- 如果保存链路已存在，只是在清理 payload、判空或 builder，也切到 `edx-assert-normalize-boundary`
+- 若当前首要问题是点击后有没有触发提交、请求有没有发出、autosave / blur 是否真的执行，先切给 `edx-reachable-flow-audit`
+- 读操作的 loading / error / empty / 残缺数据四态渲染 → `edx-async-state-completeness`；本 skill 只管写操作侧的闭环与竞态
 - 主问题是“编辑动作怎么完成保存闭环及数据稳定性” → 本 skill
 
 ## Core Rule

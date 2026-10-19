@@ -50,9 +50,9 @@ const activeIndex = timeline.findIndex(item => item.isCurrent); // ← 当前时
 
 ## Collaboration boundaries
 
-- `understanding-code-logic` 可以负责调用链与状态解释；本 skill 只保证聊天代码片段中的关键项可读。
-- `api-field-contract-guard` 负责字段是否已由契约确认；本 skill 只引用该结论，不把注释当成契约证据。
-- `inline-code-annotation` 与 `inline-code-annotation` 不重复触发；本 skill 不负责代码实现质量或格式化。
+- `edx-understanding-code-logic` 可以负责调用链与状态解释；本 skill 只保证聊天代码片段中的关键项可读。
+- `edx-api-field-contract-guard` 负责字段是否已由契约确认；本 skill 只引用该结论，不把注释当成契约证据。
+- `edx-inline-code-annotation` 与 `edx-inline-code-annotation` 不重复触发；本 skill 不负责代码实现质量或格式化。
 
 ## Completion checklist
 

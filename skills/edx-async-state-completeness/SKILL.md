@@ -9,7 +9,7 @@ description: "Use when building or reviewing any view that renders async data �
 
 这个 skill 把守的是**读操作的状态完备性**：每一个异步数据源，页面都必须回答四个问题——加载中长什么样、失败了长什么样、回来是空的长什么样、回来是残缺的长什么样。
 
-写操作的保存反馈闭环由 `editable-flow-closure` 把守；本 skill 管的是它的对偶面：数据**读回来之后**页面的每个分支是否都有着落。逻辑缺口最常见的形态就是只写"数据正常回来"的渲染分支，其余三态全部靠浏览器裸奔。
+写操作的保存反馈闭环由 `edx-editable-flow-closure` 把守；本 skill 管的是它的对偶面：数据**读回来之后**页面的每个分支是否都有着落。逻辑缺口最常见的形态就是只写"数据正常回来"的渲染分支，其余三态全部靠浏览器裸奔。
 
 ## When to Use
 
@@ -33,17 +33,17 @@ Trigger phrases include:
 
 Do not use as the primary skill for:
 
-- 写操作的保存反馈与防竞态（→ `editable-flow-closure`）
-- 字段是否真实存在的契约问题（→ `api-field-contract-guard`）
-- 脏值如何收敛、默认值放哪一层（→ `assert-normalize-boundary`）
-- 纯样式布局问题（→ `layout-blast-radius-guard`）
+- 写操作的保存反馈与防竞态（→ `edx-editable-flow-closure`）
+- 字段是否真实存在的契约问题（→ `edx-api-field-contract-guard`）
+- 脏值如何收敛、默认值放哪一层（→ `edx-assert-normalize-boundary`）
+- 纯样式布局问题（→ `edx-layout-blast-radius-guard`）
 
 优先级规则：
 
-- 字段存在性未确认 → 先走 `api-field-contract-guard`；本 skill 只在契约已确认后回答“这个分支渲染什么”
-- 空值 / 脏值的收敛动作放在边界层 → `assert-normalize-boundary`；本 skill 负责“归一化之后 UI 到底有没有对应分支”
-- 快速操作导致旧响应覆盖新数据 → `editable-flow-closure` 的时序校验；本 skill 不重复管竞态
-- 新建任何渲染接口数据的页面时，本 skill 与 `editable-flow-closure`（若含写操作）可同时触发，各管读写两侧
+- 字段存在性未确认 → 先走 `edx-api-field-contract-guard`；本 skill 只在契约已确认后回答“这个分支渲染什么”
+- 空值 / 脏值的收敛动作放在边界层 → `edx-assert-normalize-boundary`；本 skill 负责“归一化之后 UI 到底有没有对应分支”
+- 快速操作导致旧响应覆盖新数据 → `edx-editable-flow-closure` 的时序校验；本 skill 不重复管竞态
+- 新建任何渲染接口数据的页面时，本 skill 与 `edx-editable-flow-closure`（若含写操作）可同时触发，各管读写两侧
 
 ## Core Rule
 
@@ -84,7 +84,7 @@ loading → error → empty → success
 - 数值参与计算前必须确认非 null，否则 NaN 会沿着派生链污染整棵渲染树
 - 列表项内的可空字段，降级策略要落在单项渲染处，而不是整个列表崩掉
 - 图表数据缺失的时间点 / 序列，明确是断线、补零还是跳过——这是业务决策，必须显式
-- 降级值（`'-'`、占位图）由边界层 adapter 给出（遵循 `assert-normalize-boundary`），UI 只消费确定值；但**每个区块有没有降级分支**由本 skill 检查
+- 降级值（`'-'`、占位图）由边界层 adapter 给出（遵循 `edx-assert-normalize-boundary`），UI 只消费确定值；但**每个区块有没有降级分支**由本 skill 检查
 
 ## Error State Requirements
 

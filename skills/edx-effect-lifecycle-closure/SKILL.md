@@ -35,10 +35,10 @@ Trigger phrases include:
 
 边界与分流规则：
 
-- 第一性问题是“这个 effect 到底会不会执行” → 先走 `reachable-flow-audit`；本 skill 只在确认会执行后检查“执行之后能不能收回来”
-- 副作用放哪一层是组件设计问题 → `business-component-boundary`；本 skill 不管归属，只管“放在哪都必须配对清理”
-- 旧响应覆盖新数据是时序问题 → `editable-flow-closure`；但“组件卸载后回调仍然执行”属于本 skill 的清理缺口
-- 数据回来后的 loading / error / empty / 残缺四态渲染 → `async-state-completeness`；本 skill 只管副作用能否收回，不管渲染态
+- 第一性问题是“这个 effect 到底会不会执行” → 先走 `edx-reachable-flow-audit`；本 skill 只在确认会执行后检查“执行之后能不能收回来”
+- 副作用放哪一层是组件设计问题 → `edx-business-component-boundary`；本 skill 不管归属，只管“放在哪都必须配对清理”
+- 旧响应覆盖新数据是时序问题 → `edx-editable-flow-closure`；但“组件卸载后回调仍然执行”属于本 skill 的清理缺口
+- 数据回来后的 loading / error / empty / 残缺四态渲染 → `edx-async-state-completeness`；本 skill 只管副作用能否收回，不管渲染态
 
 ## Core Rule
 

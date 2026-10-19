@@ -1,0 +1,47 @@
+{
+  "skill": "edx-ui-ux-omission-guard",
+  "test_cases": [
+    {
+      "name": "editable_detail_missing_api",
+      "input": "这个用户资料详情页目前是只读展示，产品要求改成可编辑并能保存。后端保存接口还没给。请给出实现方案。",
+      "assertions": [
+        "覆盖展示、交互、校验、提交、反馈五段",
+        "明确保存触发点",
+        "拆开本地编辑态与 payload，payload 由 builder 或 adapter 组装",
+        "接口缺失时给出 handleSave 和请求时序占位，并用中文注释标出真实接口接入点",
+        "遗漏扫描区分必须收口和候选询问",
+        "必须收口完成后先给 A/B/C 交互建议，再在要不要补这些交互里展开至少 5 条，未回复前不实现"
+      ]
+    },
+    {
+      "name": "stale_tab_response",
+      "input": "用户快速切换 Tab 时，前一个 Tab 的详情接口响应晚于后一个返回，页面渲染成了旧数据。帮我修复。",
+      "assertions": [
+        "用自增请求标记在回调首行丢弃过期响应",
+        "不强制 AbortController",
+        "不擅自添加用户未要求的 loading 遮罩或 disabled",
+        "最终赋给渲染状态的数据来自最新请求"
+      ]
+    },
+    {
+      "name": "drawer_closes_before_save",
+      "input": "这个 Drawer 里的表单点保存后直接关闭了，但接口偶尔失败，用户以为保存成功了。帮我改。",
+      "assertions": [
+        "成功后才关闭 Drawer",
+        "失败时保留输入并给出可见失败提示",
+        "成功后重置 dirty 并刷新详情或列表",
+        "不把只弹提示当成完整闭环"
+      ]
+    },
+    {
+      "name": "spacing_change_clips_dropdown",
+      "input": "把卡片间距改紧一点就行，别动别的。",
+      "assertions": [
+        "先记录父容器 overflow、定位上下文和下拉层，而不是只改 margin",
+        "若间距改动会裁切下拉或焦点环，标为必须收口并先改",
+        "必须收口完成后先给 A/B/C 交互建议，再询问至少 5 条；A 至少 2 条且不把弱相关塞进 A，未回复前不实现",
+        "给出一个正常尺寸和一个长内容或窄屏验证"
+      ]
+    }
+  ]
+}

@@ -48,9 +48,9 @@ Do not use as the primary skill for:
 
 优先级规则：
 
-- 主问题是“先理解现状怎么工作” → `understanding-code-logic`
-- 主问题是“脏输入怎么在边界收口” → `assert-normalize-boundary`
-- 主问题是“编辑交互怎么形成保存闭环” → `editable-flow-closure`
+- 主问题是“先理解现状怎么工作” → `edx-understanding-code-logic`
+- 主问题是“脏输入怎么在边界收口” → `edx-assert-normalize-boundary`
+- 主问题是“编辑交互怎么形成保存闭环” → `edx-editable-flow-closure`
 - 主问题是“组件职责、状态归属、解耦边界怎么定” → 本 skill
 
 ## Core Philosophy

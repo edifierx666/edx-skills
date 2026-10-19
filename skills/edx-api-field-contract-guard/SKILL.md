@@ -100,7 +100,7 @@ When naming is unknown, present candidates rather than promoting one to fact. Fo
 
 ### 4. Set the implementation boundary
 
-Production code consumes only fields whose identity matches the current operation. Confirmed nullable or dirty fields may proceed to `assert-normalize-boundary`; contract confirmation is the fact layer, normalization is the structure layer.
+Production code consumes only fields whose identity matches the current operation. Confirmed nullable or dirty fields may proceed to `edx-assert-normalize-boundary`; contract confirmation is the fact layer, normalization is the structure layer.
 
 Route the remaining cases deliberately:
 

@@ -7,7 +7,7 @@ description: "Use when frontend work changes CSS or physical layout—spacing, f
 
 ## Purpose and boundary
 
-把布局改动当成会传播的物理变化，而不是一行局部 CSS。先定位受影响的几何关系，再决定修复方式；共享类名的引用同步属于 `change-impact-closure`，组件职责属于 `business-component-boundary`。
+把布局改动当成会传播的物理变化，而不是一行局部 CSS。先定位受影响的几何关系，再决定修复方式；共享类名的引用同步属于 `edx-change-impact-closure`，组件职责属于 `edx-business-component-boundary`。
 
 适用于布局、CSS、容器尺寸、响应式、滚动、覆盖层、点击热区、图片尺寸和共享样式。纯业务逻辑、数据清洗、执行可达性和编辑保存分别交给对应 Skill。
 
@@ -69,5 +69,5 @@ description: "Use when frontend work changes CSS or physical layout—spacing, f
 - 父容器、子组件、stacking context、overflow、scroll 和 hit area 的物理影响已记录；
 - 至少覆盖长内容、窄屏或动态内容中的一个极端场景；
 - 每个固定尺寸、裁切或覆盖方案都有明确理由；
-- 共享引用同步交给 `change-impact-closure`，代码执行问题没有被 CSS 假设掩盖；
+- 共享引用同步交给 `edx-change-impact-closure`，代码执行问题没有被 CSS 假设掩盖；
 - 修复后有可复现的视觉/交互验证路径。
