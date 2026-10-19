@@ -1,0 +1,77 @@
+{
+  "skill_name": "edx-api-field-contract-guard",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "你在一个 React + TypeScript 项目里看到前端手写的 UserResponse 只有 id: string 和 name: string。产品让你把用户列表卡片加上头像、部门、最后登录时间，并先给出实现方案。请说明你会怎么处理字段。",
+      "expected_output": "应该把 UserResponse 视为本地类型声明而不是自动视为线上契约；先确认列表接口、方法、版本和响应分支；avatarUrl/department/lastLoginTime 进入业务缺口，不能直接写进正式类型或核心代码。",
+      "files": [],
+      "expectations": [
+        "输出明确说明手写 UserResponse 是本地类型声明，只能证明实现主张，不能独立证明生产响应契约。",
+        "输出要求确认列表接口的 direction、operation、version 或 response branch。",
+        "输出将 avatarUrl、department、lastLoginTime 标为未确认或推测字段，而不是接口已返回字段。",
+        "输出明确说明不会把未确认字段直接写进正式类型或核心代码。"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "我把旧的订单列表接口迁到 GET /v2/orders。旧代码读取 creatorName、status、totalCount，并在查询参数里提交 status 和 page；新接口文档的 200 响应只写了 orderId、amount、createdAt，请做一次迁移风险审计。",
+      "expected_output": "应该分别审计 response 与 query 两个方向；新响应只确认 orderId/amount/createdAt；旧响应字段 creatorName/status/totalCount 和旧 query 参数 status/page 都要各自寻找新契约映射，否则列出 UI、分页、筛选回归。",
+      "files": [],
+      "expectations": [
+        "输出明确拆分 GET /v2/orders 的 response contract 与 query contract。",
+        "输出将 orderId、amount、createdAt 限定为 200 response 的已确认字段。",
+        "输出分别说明 creatorName、status、totalCount 缺失造成的列表、状态或分页退化。",
+        "输出不会因为 response 文档缺少 query 定义就臆测 status/page 仍可提交，而是标记待确认或阻断。"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "后端还没给完整字段，但我想先做详情页 UI。当前 OpenAPI 确认 GET /v2/articles/:id 的 200 响应有 title?: string 和 description?: string，没有 coverUrl 和 ownerAvatar。可以先用可选链加默认图兜底吗？",
+      "expected_output": "应该允许 title/description 按 OpenAPI 声明的 optional 语义处理，但 coverUrl/ownerAvatar 不能用可选链伪装成接口字段；如必须搭 UI，应使用局部占位并标记替换条件。",
+      "files": [],
+      "expectations": [
+        "输出绑定 GET /v2/articles/:id 200 response 作用域。",
+        "输出区分 title/description 是已确认 optional 字段，coverUrl/ownerAvatar 未确认。",
+        "输出说明 optional chaining 只能处理已确认字段的缺失语义，不能确认字段存在。",
+        "输出建议占位数据局部化，并使用中文 TODO 或 FIXME 标注替换条件。"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "OpenAPI 的 GET /v2/users/{id} 200 响应没有 avatarUrl，但我抓到一条管理员账号的线上响应里有 avatarUrl；前端 fixture 里也一直有这个字段。现在能不能把 avatarUrl 加成 UserResponse 的必填 string？",
+      "expected_output": "应该识别声明契约、管理员运行样本和 fixture 三类证据强度不同；avatarUrl 只能局部确认，不能推导为所有用户必填；应检查角色条件和 serializer 分支，并在冲突解除前阻断正式类型修改。",
+      "files": [],
+      "expectations": [
+        "输出区分 OpenAPI、管理员运行样本和 fixture 各自能证明的范围。",
+        "输出指出单条样本不能证明 requiredness 或普通用户分支也返回 avatarUrl。",
+        "输出把 avatarUrl 标记为局部确认或契约冲突。",
+        "输出要求确认角色条件或 serializer 分支，并在解决前不加入必填正式类型。"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "GET /v2/users 列表响应文档只有 id 和 name；GET /v2/users/:id 详情响应另外有 email 和 department。列表页现在也想展示 department，能直接复用详情 DTO 吗？",
+      "expected_output": "应该把列表与详情视为两个独立 operation scope；详情字段不能自动迁移到列表；department 对列表是业务缺口，应由后端补列表契约、改为额外详情请求并评估代价，或调整产品行为。",
+      "files": [],
+      "expectations": [
+        "输出明确区分列表和详情两个 endpoint 的 response scope。",
+        "输出不会把详情 DTO 的 department 当作列表已确认字段。",
+        "输出将列表页 department 标为契约缺口。",
+        "输出给出补列表契约、显式额外请求或调整展示等可确认方案。"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "编辑页 GET /v2/profile 返回 displayName 和 phone，但 PATCH /v2/profile 的文档只允许 displayName。页面回显后能否把整个 profile 对象原样提交？",
+      "expected_output": "应该把 detail response 与 PATCH request body 分开审计；response 中存在 phone 不代表 request body 接受 phone；payload 只能包含 PATCH 契约确认字段，phone 的编辑能力应标记为未确认。",
+      "files": [],
+      "expectations": [
+        "输出分别标记 GET response 与 PATCH request body 的 direction 和 operation。",
+        "输出说明同名对象或原样展开不能证明请求契约。",
+        "输出限制 PATCH payload 为已确认的 displayName。",
+        "输出将 phone 更新能力标为业务需要但 request contract 未确认。"
+      ]
+    }
+  ]
+}
