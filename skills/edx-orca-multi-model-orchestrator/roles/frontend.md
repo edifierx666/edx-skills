@@ -8,7 +8,7 @@
 - 能在 Orca 内置浏览器或 dev server 里自查效果时就自查，并在报告里说明查过什么。
 
 ## 模型
-见 SKILL.md §3.2 路由表 `frontend` 行。该行备选模型**只用于纯静态页面**。
+见 SKILL.md §3.2 路由表 `frontend` 行。
 
 ## 权限 / 可改文件范围
 **只改 UI 目录**：spec Ownership 列出的前端路径（如 `src/components/`、`src/app/`、`styles/`、前端静态资源）。后端、API、数据库、构建配置不在范围内；需要接口变动时用 `ask` 请示。

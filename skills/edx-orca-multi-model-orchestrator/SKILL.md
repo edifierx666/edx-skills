@@ -129,7 +129,7 @@ orca worktree current --json
 | `architect` | 技术架构、编码拆解 | `Claude Opus 5.5` | `gpt-6-astra` | `max` |
 | `coder` | 主力实现 | `GPT-6.1 Sol` | `Claude Opus 5.5` | `max` |
 | `tester` | 写测试、跑测试 | `DeepSeek V4.1 Flash 1017` | `Grok 4.7` | `max` |
-| `frontend` | 前端 / UI | `Claude Opus 5.5` | `Qwen3.8 Max`（**仅静态页面**） | `max` |
+| `frontend` | 前端 / UI | `gemini-3.8-flash` | `Claude Opus 5.5` | `max` |
 | `bulk` | 覆盖用：批量改动、按审查意见修复 | `DeepSeek V4.1 Flash 1017` | `Grok 4.7` | `max` |
 | `chores` | 覆盖用：杂活（产出**必须经 reviewer**） | `DeepSeek V4.1 Flash 1017` | `GLM-5.3-FlashX` | `max` |
 | `escalation` | 覆盖用：难题、屡次失败后升级 | `gpt-6-astra` | `claude-fable-5-1` | `max` |
@@ -145,7 +145,7 @@ orca worktree current --json
 | Anthropic | `Claude Opus 5.5`、`claude-fable-5-1` |
 | OpenAI | `GPT-6.1 Sol`、`gpt-6-astra`（以及禁用的 `gs/gpt-5.6-sol`） |
 | DeepSeek | `DeepSeek V4.1 Flash 1017` |
-| Google | `Gemini 4 Argon` |
+| Google | `Gemini 4 Argon`、`gemini-3.8-flash` |
 | xAI | `Grok 4.7` |
 | Alibaba | `Qwen3.8 Max` |
 | Zhipu | `GLM-5.3-FlashX` |
