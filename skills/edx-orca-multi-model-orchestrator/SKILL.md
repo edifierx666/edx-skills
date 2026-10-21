@@ -60,6 +60,7 @@ orca skills get orchestration --full
 orca skills get orca-cli
 orca repo list --json
 orca worktree current --json
+curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 ```
 
 - `status` 失败：停下，告诉用户 Orca 没在运行，或 CLI 没注册。
@@ -75,13 +76,15 @@ orca worktree current --json
 
 ## 2. 智能体与模型（前提假设）
 
-- **只用 Claude Code 当 worker**：每个 worker 都用 `--agent claude --model <路由表 id>` 启动。Claude Code 已统一接入 magpie provider，所以非 Claude 模型也直接用 `--model` 选。
-- **模型 id 必须和 provider 暴露的名字完全一致**，路由表里写的就是这个 id。
+- **只用 Claude Code 当 worker**：每个 worker 都用 `--agent claude --model <真实模型 id>` 启动。Claude Code 已统一接入 magpie provider，所以非 Claude 模型也直接用 `--model` 选。
+- **路由表里的模型名只是「意图」，不是可直接传的 id。启动任何 worker 之前，必须先解析成真实 id：**
+  1. 预检里调用本地网关拿现有模型列表：`curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'`，读 `data[].id`。
+  2. 把路由表里用到的每个模型名（默认 + 备选）对应到列表里**真实存在**的 id：按厂商 / 系列 / 版本号 / 档位关键词做不区分大小写的匹配；有多个候选时取最贴近的版本，拿不准就列给用户确认。
+  3. 列表里找不到对应项的模型视为不可用，直接用该行备选；备选也没有，就在计划里标出并问用户。
+  4. 把「路由表名 → 真实 id」对照表写进拆解计划，给用户确认；之后所有 `worker-start --model` 都只用对照表里的真实 id，**禁止**直接传路由表里的显示名。
+  5. 网关调不通：停下，告诉用户 3456 没响应，不要凭记忆猜 id。
 - **每次启动后读 `launch.effective`**（对照 `launch.requested`），以 effective 为准记录和汇报。
-- **启动失败或模型不符**：改用同一行的备选模型，并记下来。如果仍然失败，可以查一次模型列表：
-  ```
-  curl http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
-  ```
+- **启动失败或模型不符**：改用同一行备选模型对应的真实 id，并记下来；仍失败就重新拉一次模型列表再核对。
 - **Flag 约束**：
   - `--effort` 必须和 `--model` 一起用。
   - `--model` 和 `--effort` 都不能和 `--terminal` 同用；复用终端时，模型沿用原来的。
@@ -93,6 +96,8 @@ orca worktree current --json
 ## 3. 角色与模型路由表（唯一事实来源 · 可编辑）
 
 > ✏️ **EDITABLE — 用户可直接改这一节。** 模型 id **只**写在这里，角色文件和本文其他地方只按「行键」引用。
+>
+> ⚠️ 这里写的是模型**意图名**，启动前须按 §2 先从本地 3456 的模型列表解析成真实 id。
 
 ### 3.1 角色索引
 
@@ -246,13 +251,13 @@ orca orchestration run-create --objective "<用户的总目标>" --json
 **无依赖的任务：一步建任务并启动**
 
 ```
-orca orchestration worker-start --spec "<spec>" --task-title "<短标题>" --worktree current --agent claude --model "<行默认模型>" --json
+orca orchestration worker-start --spec "<spec>" --task-title "<短标题>" --worktree current --agent claude --model "<该行默认模型的真实 id>" --json
 ```
 
 仅 worktree 模式：
 
 ```
-orca orchestration worker-start --spec "<spec>" --task-title "<短标题>" --worktree new-child --name <名字> --agent claude --model "<id>" --setup run --json
+orca orchestration worker-start --spec "<spec>" --task-title "<短标题>" --worktree new-child --name <名字> --agent claude --model "<真实 id>" --setup run --json
 ```
 
 **有依赖的计划：先建 task，再按就绪顺序启动**
@@ -261,7 +266,7 @@ orca orchestration worker-start --spec "<spec>" --task-title "<短标题>" --wor
 orca orchestration task-create --spec "<spec>" --task-title "<标题>" --json
 orca orchestration task-create --spec "<依赖前者的 spec>" --deps '["<task_id>"]' --json
 orca orchestration task-list --ready --brief --json
-orca orchestration worker-start --task <task_id> --worktree current --agent claude --model "<id>" --json
+orca orchestration worker-start --task <task_id> --worktree current --agent claude --model "<真实 id>" --json
 ```
 
 - `--deps` 是 JSON 数组，引号按当前 shell 的规则写。
@@ -365,7 +370,7 @@ coder / tester / frontend / writer / slide-designer 的任务成功后，派审�
 
 1. **环境或 spec 问题**：先修正 spec，或回答 worker 的问题。对确证 `failed` / `stopped` 的派发，用原 task 重试。**放置要重新写明**（`--retry-of` 不继承放置；worktree 模式下写原来那个 worktree 的 `id:<完整 id>`）：
    ```
-   orca orchestration worker-start --task <task_id> --retry-of <dispatch_id> --worktree current --agent claude --model "<id>" --json
+   orca orchestration worker-start --task <task_id> --retry-of <dispatch_id> --worktree current --agent claude --model "<真实 id>" --json
    ```
 2. **启动失败或模型不符**：改用同一行的备选模型（§2）。
 3. **能力不够**（有新证据）：同一角色，覆盖为 `escalation` 行。只升一次，写明理由。
