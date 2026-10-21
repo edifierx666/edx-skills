@@ -123,13 +123,13 @@ curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 | 行键 | 用途 | 默认 `--model` | 备选 `--model` | 默认 `--effort` |
 | --- | --- | --- | --- | --- |
 | `coordinator` | 运行本技能的总指挥（非 worker） | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
-| `researcher` | 调研、搜集资料、长上下文阅读 | `Gemini 4 Argon` | — | `max` |
+| `researcher` | 调研、搜集资料、长上下文阅读 | `gemini-3.8-flash` | `GPT-6.1 Sol` | `max` |
 | `planner` | 结构、大纲、受众、核心信息 | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
 | `reviewer` | 审查（家族必须 ≠ 作者） | 作者为 OpenAI 系 → `Claude Opus 5.5`；其他家族的作者 → `GPT-6.1 Sol` | `gpt-6-astra`；第二意见 `Grok 4.7` | `max` |
-| `fact-checker` | 核实论断、数字、链接 | `Gemini 4 Argon` | `gpt-6-astra` | `max` |
-| `red-team` | 对抗性攻击（家族必须 ≠ 作者，且 ≠ 审查员） | `gpt-6-astra` | `Grok 4.7`；作者为 OpenAI 系时 → `Claude Opus 5.5` / `Gemini 4 Argon` | `max` |
+| `fact-checker` | 核实论断、数字、链接 | `gemini-3.8-flash` | `gpt-6-astra` | `max` |
+| `red-team` | 对抗性攻击（家族必须 ≠ 作者，且 ≠ 审查员） | `gpt-6-astra` | `Grok 4.7`；作者为 OpenAI 系时 → `Claude Opus 5.5` / `gemini-3.8-flash` | `max` |
 | `writer` | 撰稿 | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
-| `editor` | 编辑校对（家族必须 ≠ 撰稿人） | `GPT-6.1 Sol` | `Gemini 4 Argon` | `max` |
+| `editor` | 编辑校对（家族必须 ≠ 撰稿人） | `GPT-6.1 Sol` | `gemini-3.8-flash` | `max` |
 | `slide-designer` | PPT / 演示文稿 | `gemini-3.8-flash` | `Claude Opus 5.5` | `max` |
 | `architect` | 技术架构、编码拆解 | `Claude Opus 5.5` | `gpt-6-astra` | `max` |
 | `coder` | 主力实现 | `GPT-6.1 Sol` | `Claude Opus 5.5` | `max` |
@@ -138,7 +138,7 @@ curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 | `bulk` | 覆盖用：批量改动、按审查意见修复 | `DeepSeek V4.1 Flash 1017` | `Grok 4.7` | `max` |
 | `chores` | 覆盖用：杂活（产出**必须经 reviewer**） | `DeepSeek V4.1 Flash 1017` | `GLM-5.3-FlashX` | `max` |
 | `escalation` | 覆盖用：难题、屡次失败后升级 | `gpt-6-astra` | `claude-fable-5-1` | `max` |
-| `avoid` | 禁用 | `gs/gpt-5.6-sol` | — | 任何角色都不得分配 |
+| `avoid` | 禁用 | `gs/gpt-5.6-sol`、`Gemini 4 Argon`（太贵，暂停） | — | 任何角色都不得分配 |
 
 - `bulk` / `chores` / `escalation` 不是角色，只用来覆盖某个角色的默认模型。
 - **界面展示类优先用 `gemini-3.8-flash`（便宜）**：前端 / UI、PPT / 演示文稿、HTML 展示页、图表与可视化排版等，都默认它；效果不达标再换该行备选。
@@ -151,7 +151,7 @@ curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 | Anthropic | `Claude Opus 5.5`、`claude-fable-5-1` |
 | OpenAI | `GPT-6.1 Sol`、`gpt-6-astra`（以及禁用的 `gs/gpt-5.6-sol`） |
 | DeepSeek | `DeepSeek V4.1 Flash 1017` |
-| Google | `Gemini 4 Argon`、`gemini-3.8-flash` |
+| Google | `gemini-3.8-flash`（`Gemini 4 Argon` 暂停使用） |
 | xAI | `Grok 4.7` |
 | Alibaba | `Qwen3.8 Max` |
 | Zhipu | `GLM-5.3-FlashX` |
@@ -166,7 +166,7 @@ agent 都是 Claude Code 也没关系，回避规则只看**模型家族**。
    - 审查员 ≠ 作者的家族；
    - 编辑 ≠ 撰稿人的家族；
    - 事实核查尽量 ≠ 作者的家族。
-4. **红方**必须同时 ≠ 作者和审查员的家族。按 默认 → 备选 → `Claude Opus 5.5` → `Gemini 4 Argon` → `Grok 4.7` 的顺序，取第一个不撞家族的。
+4. **红方**必须同时 ≠ 作者和审查员的家族。按 默认 → 备选 → `Claude Opus 5.5` → `gemini-3.8-flash` → `Grok 4.7` 的顺序，取第一个不撞家族的。
 5. **同一角色可以并行开多个 worker**（例如 4 个撰稿人各写一章），前提是 Ownership 不重叠。
 6. 启动失败，或 `launch.effective` 与要求不符：改用该行的备选模型，并记下来。
 
