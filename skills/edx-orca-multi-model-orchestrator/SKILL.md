@@ -1,6 +1,6 @@
 ---
 name: edx-orca-multi-model-orchestrator
-description: 当用户说「用 orca 多智能体完成：<任务>」时使用——你作为总指挥，在 Orca 里把任意任务（写代码，或调研报告、文章、文档、PPT 等非代码交付）拆成子任务，按路由表给每个子任务选角色与模型，用 orca CLI 启动并监督 Claude Code worker，换模型家族交叉审查（复杂任务加红方攻击），最后整合成一份交付物并汇报。
+description: 当用户说「用 orca 多智能体完成：<任务>」时使用——你作为总指挥，在 Orca 里把任意任务（写代码，或调研报告、文章、文档、PPT 等非代码交付）拆成子任务（含 PRD / 需求文档审计），按路由表给每个子任务选角色与模型，用 orca CLI 启动并监督 Claude Code worker，换模型家族交叉审查（复杂任务加红方攻击），最后整合成一份交付物并汇报。
 ---
 
 # Orca 多模型总指挥（Coordinator Playbook）
@@ -108,6 +108,7 @@ curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 | 通用 | 审查员（代码 / 文档两种模式） | `roles/reviewer.md` | `reviewer` | 只读 |
 | 通用 | 事实核查 | `roles/fact-checker.md` | `fact-checker` | 只读 |
 | 通用 | 红方（仅复杂任务） | `roles/red-team.md` | `red-team` | 只读 |
+| 通用 | 需求审计官（PRD / User Story 审计） | `roles/requirement-auditor.md` | `requirement-auditor` | 只读（只写审计报告） |
 | 写作与办公 | 撰稿人 | `roles/writer.md` | `writer` | 只改分配给它的章节文件 |
 | 写作与办公 | 编辑校对 | `roles/editor.md` | `editor` | 只改分配给它的稿件 |
 | 写作与办公 | PPT / 演示文稿 | `roles/slide-designer.md` | `slide-designer` | 只改分配给它的幻灯片源文件和产物 |
@@ -127,6 +128,7 @@ curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 | `planner` | 结构、大纲、受众、核心信息 | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
 | `reviewer` | 审查（家族必须 ≠ 作者） | 作者为 OpenAI 系 → `Claude Opus 5.5`；其他家族的作者 → `GPT-6.1 Sol` | `gpt-6-astra`；第二意见 `Grok 4.7` | `max` |
 | `fact-checker` | 核实论断、数字、链接 | `gemini-3.8-flash` | `gpt-6-astra` | `max` |
+| `requirement-auditor` | 需求文档审计（字面一致性 + 业务闭环；PRD 由 worker 写时家族必须 ≠ 作者） | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
 | `red-team` | 对抗性攻击（家族必须 ≠ 作者，且 ≠ 审查员） | `gpt-6-astra` | `Grok 4.7`；作者为 OpenAI 系时 → `Claude Opus 5.5` / `gemini-3.8-flash` | `max` |
 | `writer` | 撰稿 | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
 | `editor` | 编辑校对（家族必须 ≠ 撰稿人） | `GPT-6.1 Sol` | `gemini-3.8-flash` | `max` |
@@ -196,7 +198,9 @@ agent 都是 Claude Code 也没关系，回避规则只看**模型家族**。
 3. **拆子任务，每个指定一个角色。并行优先：**
    - 只为真实的先后关系加依赖，依赖链不超过 3–4 层。
    - 互相独立的任务在第一次等待之前全部启动。
+   - **输入里有 PRD / User Story / 需求说明，或用户要求审需求时**：第一步先派 `requirement-auditor`。结论为 BLOCKED 或有待拍板项时，把报告第三部分的「待拍板决策项」交给用户确认，确认后再进入后续流水线；`Given-When-Then` 验收用例直接写进下游 coder / tester 的 Observable acceptance。
    - 典型流水线：
+     - **需求审计**（只审需求时）：requirement-auditor →（复杂任务：红方攻击审计报告）→ 汇报。
      - **文档**：researcher → planner →（红方攻击大纲）→ 多个 writer 并行 → fact-checker、reviewer 文档模式 → editor →（红方攻击成稿）→ 整合。
      - **PPT**：在文档流水线后面接 slide-designer。
      - **代码**：architect →（红方）→ 多个 coder / frontend / tester 并行 → reviewer 代码模式 →（红方）→ 整合。
@@ -230,7 +234,7 @@ Report: 按角色文件的「交付格式」，完成或失败都恰好发一次
    多个 worker 同时跑构建、测试或渲染时，产物目录也可能互相覆盖。给每个 worker 指定独立的输出路径，或者把这类任务串行。
 6. **复杂任务**：先让红方攻击计划或大纲（§7.3），处理完再继续。
 7. 把计划表交给用户确认后再启动。计划表包含：子任务、角色、路由行、模型、理由、依赖、放置、交付物类型、是否复杂及理由。
-8. spec 太长时，压缩任务说明，**不要删前置提示词里的硬性规则**。
+8. spec 太长时，压缩任务说明，**不要删前置提示词里的硬性规则**。`requirement-auditor` 的「审计规范」整节必须原样附在 spec 里，不得压缩。
 
 ---
 
