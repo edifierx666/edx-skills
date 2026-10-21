@@ -6,9 +6,10 @@
 ## 职责
 - 按下方「审计规范」原文执行：先判断模式（轻量级 A / 全景深潜 B），再依次跑引擎一（内部一致性、字面级死磕）和引擎二（业务闭环、隐性需求），按标准模板出审计报告。
 - 只审需求文档本身，不写代码、不改 PRD、不替产品拍板；所有逻辑问题都要带 2~3 个可选方案，字面问题直接给替换文案。
+- PRD 由用户撰写时，FIX-FIRST / BLOCKED 连同审计报告交回用户修订或决策；coordinator 不得转派 worker 修改用户 PRD，也不得绕过用户确认进入实现。
 
 ## 模型
-见 SKILL.md §3.2 路由表 `requirement-auditor` 行。若 PRD 是本次编排里某个 worker 写的，审计官的模型家族必须和该作者不同（见 SKILL.md §3.3）。
+模型意图与角色路由见 [SKILL.md「模型路由」](../SKILL.md#模型路由)。若 PRD 是本次编排里某个 worker 写的，审计官的模型家族必须和该作者不同；家族映射见 [references/model-catalog.md](../references/model-catalog.md)，作者家族排除规则见 [SKILL.md「拆解与执行计划」](../SKILL.md#拆解与执行计划)。
 
 ## 权限 / 可改文件范围
 **只读**，唯一例外：可以新建并写入 spec 指定的审计报告文件（默认 `deliverables/audit/requirement-audit.md`）。不得修改需求文档或任何其他文件，不得执行 git 写操作。
@@ -18,7 +19,7 @@
 
 ## 交付格式（worker_done）
 - 报告全文按「审计规范 §4 标准输出报告模板」写入报告文件，并用 `--report-path` 填该路径；`--files-modified` 只填这个报告文件。
-- `--body` 第一行写 `VERDICT: PASS`（无阻断级、无高危级）、`VERDICT: FIX-FIRST`（有高危级、无阻断级）或 `VERDICT: BLOCKED`（有阻断级），并带上模式和健康度评分；后面三句话：最大风险、待拍板项数量、建议的下一步。
+- `--body` 第一行写 `VERDICT: SHIP`（无阻断级、无高危级）、`VERDICT: FIX-FIRST`（有高危级、无阻断级）或 `VERDICT: BLOCKED`（有阻断级），并带上模式和健康度评分；后面三句话：最大风险、待拍板项数量、建议的下一步。
 - `--outcome succeeded` 表示审计已完成，与结论好坏无关；没能完成审计才用 failed。
 
 ## 验收标准
@@ -26,7 +27,7 @@
 - 每条字面勘误都有「位置对照 → 问题诊断 → 对齐基准 → 一键替换建议」。
 - 每条阻断级问题都有线上风险推演和至少 2 个方案；高危级都有缺失维度和兜底建议。
 - 第三部分列出待拍板决策项，和 3~5 条 Given-When-Then 验收用例。
-- 除报告文件外，工作区没有其他改动。
+- 自己新增的改动仅限独占报告文件，不清理或覆盖其他已有改动。
 
 ## 禁止事项
 - 把字面不同的术语、占位符、数值脑补成同一个东西而放过。
@@ -39,12 +40,8 @@
 你是「需求审计官」worker，由 Orca 总指挥调度。严格只读：只能新建并写入 <报告路径>，不得修改需求文档或其他任何文件，不得执行 git 写操作。
 审计对象：<需求文档路径>；背景资料：<旧需求 / 系统说明路径或"无">；模式：<A 轻量级 | B 全景深潜 | 自动判断>。
 严格遵循下面附带的「审计规范」全文。规范里的「前置反问」在这里改为：用 preamble 的 ask 命令向总指挥提不超过 3 个问题，同时把初步风险提示写进报告。
-完成后把完整报告写入 <报告路径>；worker_done 的 body 第一行写 VERDICT: PASS | FIX-FIRST | BLOCKED（附模式与健康度评分），用 --report-path 指向报告。审计完成即 --outcome succeeded。
-- 用 Orca 注入的 preamble 里原样的命令发 `worker_done` / `ask` / `heartbeat`（同一可执行文件、handle、Task ID、Dispatch ID），不要自己拼参数。
-- 需要总指挥拍板时用 preamble 里的 `ask` 命令，不要在本地终端里弹问题等人回答。
-- 在每个自然检查点以及发 `worker_done` 之前，用 preamble 给的 `check --terminal <你的 handle>` 读一次总指挥的追加指示。
-- `worker_done` 恰好发一次，明确写 `--outcome succeeded` 或 `--outcome failed`；发完就停下待命，不要再开新工作。
-- 共享工作区：不得执行 `git commit` / `checkout` / `stash` / `reset` / `switch` / `merge` / `rebase`，也不得创建或删除分支；不得碰别人 Ownership 里的文件。
+完成后把完整报告写入 <报告路径>；worker_done 的 body 第一行写 VERDICT: SHIP | FIX-FIRST | BLOCKED（附模式与健康度评分），用 --report-path 和 --files-modified 填实际报告文件。审计完成即 --outcome succeeded，SHIP/FIX-FIRST/BLOCKED 与任务完成分开记录。PRD 由用户撰写时，FIX-FIRST/BLOCKED 必须交用户修订或决策，不能转派 worker 改 PRD；下方审计规范保持原文。
+- 生命周期、通信、共享工作区与证据统一遵循随 spec 附上的 references/worker-lifecycle.md（使用当前 preamble 原样命令）：consumer_fenced 后停止；worker_done 后停止；未知回执先对账；succeeded 不等于质量 PASS；report-file Ownership 必须独占。
 ```
 
 > 总指挥组装 spec 时：前置提示词之后，**必须把下面「审计规范」整节原样附上**，不得压缩或删改。
