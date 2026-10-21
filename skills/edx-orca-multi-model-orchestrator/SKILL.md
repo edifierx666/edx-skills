@@ -125,7 +125,7 @@ orca worktree current --json
 | `red-team` | 对抗性攻击（家族必须 ≠ 作者，且 ≠ 审查员） | `gpt-6-astra` | `Grok 4.7`；作者为 OpenAI 系时 → `Claude Opus 5.5` / `Gemini 4 Argon` | `max` |
 | `writer` | 撰稿 | `Claude Opus 5.5` | `GPT-6.1 Sol` | `max` |
 | `editor` | 编辑校对（家族必须 ≠ 撰稿人） | `GPT-6.1 Sol` | `Gemini 4 Argon` | `max` |
-| `slide-designer` | PPT / 演示文稿 | `Claude Opus 5.5` | `Qwen3.8 Max` | `max` |
+| `slide-designer` | PPT / 演示文稿 | `gemini-3.8-flash` | `Claude Opus 5.5` | `max` |
 | `architect` | 技术架构、编码拆解 | `Claude Opus 5.5` | `gpt-6-astra` | `max` |
 | `coder` | 主力实现 | `GPT-6.1 Sol` | `Claude Opus 5.5` | `max` |
 | `tester` | 写测试、跑测试 | `DeepSeek V4.1 Flash 1017` | `Grok 4.7` | `max` |
@@ -136,6 +136,7 @@ orca worktree current --json
 | `avoid` | 禁用 | `gs/gpt-5.6-sol` | — | 任何角色都不得分配 |
 
 - `bulk` / `chores` / `escalation` 不是角色，只用来覆盖某个角色的默认模型。
+- **界面展示类优先用 `gemini-3.8-flash`（便宜）**：前端 / UI、PPT / 演示文稿、HTML 展示页、图表与可视化排版等，都默认它；效果不达标再换该行备选。
 - 默认 `--effort` 全部为 `max`（`--effort` 必须和 `--model` 一起传）。若某模型不支持 `max`、启动报错或 `launch.effective` 显示被降级，改用 `xhigh`，再不行用 `high`，并在汇报里注明。想改单行就改这一栏。
 
 ### 3.3 模型厂商家族（审查、编辑、红方的回避规则）
