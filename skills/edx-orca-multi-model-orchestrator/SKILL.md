@@ -55,15 +55,13 @@ description: 当用户说「用 orca 多智能体完成：<任务>」时使用�
 ## 1. 预检（每次开工必做）
 
 ```
-orca status --json
 orca skills get orchestration --full
 orca skills get orca-cli
-orca repo list --json
 orca worktree current --json
 curl -s http://127.0.0.1:3456/v1/models -H 'Authorization: Bearer magpie'
 ```
 
-- `status` 失败：停下，告诉用户 Orca 没在运行，或 CLI 没注册。
+- 上面的 `orca` 命令连不上或报错：停下，告诉用户 Orca 没在运行，或 CLI 没注册。
 - orchestration 命令报未启用：让用户去 Settings → Experimental 打开编排开关。
 - `skills get` 的输出与本文件冲突时，以 `skills get` 为准。
 - **旧命令已失效**：`orca orchestration run`、`run-stop`、`coordinator-start`、`coordinator-stop` 都不再起作用，一律改用 `run-create` + `worker-start`。
