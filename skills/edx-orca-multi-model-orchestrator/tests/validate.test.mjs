@@ -230,6 +230,13 @@ const boundaryMutations = [
   ['目录校验入口', 'SKILL.md', 'node scripts/validate.mjs\nnode --test tests/', 'node scripts/validate.mjs', 'validation-entry'],
   ['多模型 review 优先 orchestration', 'SKILL.md', '触发本 Skill 即使用 `orchestration`', '触发本 Skill 即使用 `orca-cli` handoff', 'orca-launch-routing'],
   ['orca-cli 仅作底层或 handoff', 'SKILL.md', '`orca-cli` 只用于完整 handoff 或底层 terminal/worktree 控制，不代替监督编排。', '`orca-cli` 负责多模型监督编排', 'orca-cli-boundary'],
+  ['SKILL 极速 review 最少智能体数', 'SKILL.md', '至少并发派发 2 个、默认 3 个不同家族的只读审查 worker', '派发 1 个只读审查 worker', 'multi-agent-minimum'],
+  ['SKILL 禁止 coordinator 自审', 'SKILL.md', 'coordinator 读代码只为写 spec，严禁自己出结论代替 worker', 'coordinator 可以直接读代码出结论', 'coordinator-no-self-review'],
+  ['极速 review reference 最少智能体数', 'references/multi-agent-review.md', '至少 **2 个** worker，默认 **3 个**', '至少 1 个 worker', 'multi-agent-minimum'],
+  ['极速 review reference 家族覆盖', 'references/multi-agent-review.md', '至少 **2 个不同开发者家族**', '同一开发者家族即可', 'multi-agent-family-coverage'],
+  ['极速 review reference 禁止自审', 'references/multi-agent-review.md', 'coordinator 不得亲自阅读被审代码或需求文档后直接输出审查结论，代替 worker。', 'coordinator 可直接阅读代码输出审查结论。', 'coordinator-no-self-review'],
+  ['极速 review reference 禁止伪造多智能体', 'references/multi-agent-review.md', '不得用 1 个 worker 的结果复制成多份报告，冒充多智能体交叉审查。', '可用 1 个 worker 结果拆成多份报告。', 'multi-agent-no-fake-parallel'],
+  ['极速 review 免计划阻塞', 'references/multi-agent-review.md', '不需要用户先批准角色/模型/Ownership 计划', '必须先停下等用户批准计划', 'multi-agent-no-plan-gate'],
   ['单 Agent 任务不触发本 Skill', 'SKILL.md', '一个 agent 可独立完成的任务不要使用本 skill', '所有任务都使用本 skill', 'skill-trigger'],
   ['确认实际 Dispatch receipt', 'SKILL.md', '每个 worker 必须核验 Dispatch receipt/handle。', '检查 --help 后即可视为启动成功。', 'launch-receipt'],
 

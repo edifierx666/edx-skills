@@ -1,7 +1,7 @@
 ---
 name: edx-orca-multi-model-orchestrator
 description: >-
-  在 Orca 中需要多 agent/多模型协作代码、调研、文档、PPT 或 PRD 审计时使用，包括“多模型 review”。本 Skill 触发即走 orchestration；orca-cli 用于完整 handoff 或底层 terminal/worktree 控制。一个 agent 可独立完成的任务不要使用本 skill。
+  在 Orca 中需要多 agent/多模型协作代码、调研、文档、PPT 或 PRD 审计时使用，包括“多模型 review”“多个智能体 review”。本 Skill 触发即走 orchestration；orca-cli 用于完整 handoff 或底层 terminal/worktree 控制。一个 agent 可独立完成的任务不要使用本 skill。
 ---
 
 # Orca 多模型总指挥
@@ -10,26 +10,19 @@ description: >-
 
 每个 worker 必须核验 Dispatch receipt/handle。仅查 help/状态不算启动。启动失败或不确定时停止报告；禁止用 HTTP、gateway、`fetch`、`curl` 或 `ctx_execute` 调模型代做审查。`ctx_execute` 可做非推理分析。
 
-## 使用前资料
+review 代码、对照需求文档核查或“多个智能体 / 多模型 review”命中 [`references/multi-agent-review.md`](references/multi-agent-review.md) 极速模式：只读任务，直接建 Run 并**至少并发派发 2 个、默认 3 个不同家族的只读审查 worker**，不先索要计划确认；coordinator 读代码只为写 spec，严禁自己出结论代替 worker。
 
-- 安装和开工提示词：[`references/install.md`](references/install.md)。
-- Orca 恢复、超时、request 和计划派发额度：[`references/recovery.md`](references/recovery.md)。
-- 协调器账本、基线、candidate/worktree 转移、质量门、终端资源和提交：[`references/coordinator-protocol.md`](references/coordinator-protocol.md)。
-- 常见厂商前缀、版本判断、已知 alias → 精确模型 ID → 家族，以及交叉审查候选顺序：[`references/model-catalog.md`](references/model-catalog.md)。
-- Orca 工具边界：[`references/agent-launch.md`](references/agent-launch.md)。监督式 worker spec 须附 [`references/worker-lifecycle.md`](references/worker-lifecycle.md)。
-- 逐项异常/验收走查：[`references/acceptance-scenarios.md`](references/acceptance-scenarios.md)。
+## 参考资料
+
+- 安装与启动：[`references/install.md`](references/install.md)、[`references/agent-launch.md`](references/agent-launch.md)、[`references/worker-lifecycle.md`](references/worker-lifecycle.md)。
+- 多智能体极速 review：[`references/multi-agent-review.md`](references/multi-agent-review.md)。
+- 协议与恢复：[`references/coordinator-protocol.md`](references/coordinator-protocol.md)、[`references/recovery.md`](references/recovery.md)、[`references/model-catalog.md`](references/model-catalog.md)、[`references/acceptance-scenarios.md`](references/acceptance-scenarios.md)。
 
 ## 预检
 
-开始前确定交付类型（代码 / 文档 / 混合）、目标和验收、风险、基线、数据策略及授权的 provider/family。敏感度、provider 或外网策略未知时不得派发。高风险/不可逆任务（删除、生产配置、安全/合规、对外发布）默认要求隔离 worktree 和已核实的 Manual permissions 或等效控制；worktree、Ownership 和提示词都不是权限沙箱。
+确定交付类型、验收、基线、数据策略与 provider/family。敏感度或外网策略未知时不得派发（命中 `references/multi-agent-review.md` 的本地只读 review 按该文件默认只读处理）。高风险/不可逆任务要求隔离 worktree 和已核实的 Manual permissions；worktree、Ownership 和提示词不是权限沙箱。先锁定唯一 Orca 可执行文件，加载 `orchestration` 指南执行；不要切可执行文件或把 handoff 与 supervised worker 混成重复启动。
 
-启动规则见 [`references/agent-launch.md`](references/agent-launch.md)。先加载当前版本的 `orchestration` 指南并按其 supervised loop 执行；需要完整 handoff 或 terminal/worktree 操作时再调用 `orca-cli`。不要把 handoff 与 supervised worker 混成两条重复路径。
-
-先用环境变量或版本匹配指南确定唯一 Orca 可执行文件，并在所有后续命令中保持一致；不要切换到另一个可执行文件来绕过错误。恢复 gate 再读取指南指定的 recovery reference。
-
-记录 repo/workspace、HEAD/ref/SHA、`git status --porcelain=v1 -uall`、staged/unstaged diff、untracked 文件 hash、目标路径基线 hash、Ownership 和用户已确认的派发额度。无 Git 的文件夹记录文件清单/hash。若基线 dirty/untracked 与目标 Ownership 重叠或无法归因，停止并询问；禁止 restore/reset/stash/clean 或覆盖。将每 Run coordinator manifest/spec 放在 `.orca-notes/runs/<run-id>/`；只在 Git 仓库时 `.orca-notes/` 加入该仓库 `.git/info/exclude`，不改共享 `.gitignore`。manifest 不得记录 token 或不必要的敏感正文。
-
-联网调研的 researcher/fact-checker 使用独立、干净且无密钥文件的 worktree。若无法确认隔离或密钥文件不存在，不给 worker 直接访问的资料，改由 coordinator 提供脱敏/筛选后的副本；风险仍不清时暂停。
+记录 repo/HEAD/SHA、`git status --porcelain=v1 -uall`、diff、untracked/目标文件 hash、Ownership 和 dispatch ceiling（极速模式默认 6）；非 Git 记录文件清单/hash。dirty/untracked 与目标 Ownership 重叠时停止询问，禁止 restore/reset/stash/clean。manifest/spec 放 `.orca-notes/runs/<run-id>/`；只在 Git 仓库时 `.orca-notes/` 加入该仓库 `.git/info/exclude`，不改共享 `.gitignore`。联网 researcher/fact-checker 用干净无密钥 worktree，否则由 coordinator 供脱敏副本。
 
 ## 模型路由
 
@@ -51,7 +44,7 @@ description: >-
 | tester | `roles/tester.md` | tester | 独占测试文件/fixture；按阶段执行 |
 | frontend | `roles/frontend.md` | frontend | 独占 UI 产品文件；测试归 tester |
 
-快速添加角色：复制最接近的 `roles/*.md` 作为模板，替换角色职责、输入/输出、验收、报告路径与 Ownership；把新角色加入本索引和下方路由表，路由模型使用目录已有 alias。若需新模型 alias，先确认完整 ID、provider 与开发者 family 后更新 `references/model-catalog.md`，不能按名字猜测。检查新角色符合 `references/worker-lifecycle.md`，并补齐上下游依赖和验收场景；最后运行本目录的 `node scripts/validate.mjs` 与 `node --test tests/`。Validator 从角色文件和表格动态发现角色，不维护固定角色数量清单。
+快速添加角色：复制最接近的 `roles/*.md` 作为模板，替换角色职责、输入/输出、验收、报告路径与 Ownership；把新角色加入本索引和下方路由表，路由模型使用目录已有 alias。若需新模型 alias，先确认完整 ID、provider 与开发者 family 后更新 `references/model-catalog.md`，不能按名字猜测。检查新角色符合 `references/worker-lifecycle.md`，补齐上下游依赖和验收场景；最后运行本目录的 `node scripts/validate.mjs` 与 `node --test tests/`。
 
 每个角色恰好对应一条路由；coordinator 不派发自己。完整模型映射与候选家族在 `references/model-catalog.md`；路由表只填模型意图名：
 
@@ -83,15 +76,15 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
   -H "Authorization: Bearer $MAGPIE_TOKEN"
 ```
 
-规划阶段先为**每一个审查 gate**计算 authorFamilies 排除后的候选 ID、模型家族、capability 和 effort。authorFamilies 按被审范围逐文件归属：只修改测试的 tester 只进入测试文件范围，不进入产品代码家族集合；writer/editor/修复者同理。reviewer、fact-checker、editor 排除各自范围的完整 authorFamilies；red-team 另外排除 reviewer family。未知家族或无候选，在计划中停止并交用户决定，不得到执行中途才阻塞，也不能把整体终审拆小来绕过家族约束。
+规划阶段先为**每一个审查 gate**计算 authorFamilies 排除后的候选 ID、模型家族、capability 和 effort。authorFamilies 按被审范围逐文件归属：只修改测试的 tester 只进入测试文件范围，不进入产品代码家族集合；writer/editor/修复者同理。reviewer、fact-checker、editor 排除各自范围的完整 authorFamilies；red-team 另外排除 reviewer family。未知家族或无候选，在计划中停止并交用户决定，不得到执行中途才阻塞，也不能把整体终审拆小来绕过家族约束。极速模式作者家族未知的处理见 [`references/multi-agent-review.md`](references/multi-agent-review.md)。
 
 每次启动记录 `launch.requested` 和 `launch.effective`。后者只证明 Orca 层请求/采用了什么，不证明 gateway 最终 reasoning 档位。网关日志或模型配置未核实前，按“请求 max，生效档位待核实”汇报；如何核实见 `references/recovery.md`。模型候选不是质量、速度或价格保证。
 
 ## 拆解与执行计划
 
-先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试、报告和渲染输出；每条可写路径唯一 owner；依赖表示真实先后，超过 4 层先解释原因。启动前确认角色、模型/family、Ownership、profile、dispatch ceiling 和验收。只读 review 计划与数据策略确认后可创建 Run/Task 并派发 worker；写入、并行或高影响操作仍须相应授权。
+先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试、报告和渲染输出；每条可写路径唯一 owner；依赖表示真实先后，超过 4 层先解释原因。启动前确认角色、模型/family、Ownership、profile、dispatch ceiling 和验收。只读 review 命中 [`references/multi-agent-review.md`](references/multi-agent-review.md) 极速模式时直接派发，不先取得计划确认；其余只读 review 计划与数据策略确认后可派发 worker。写入、并行或高影响操作仍须相应授权。
 
-默认 `shared-serial`；普通文档的独立章节可选 `parallel-doc`（支持非 Git）；代码并行写入仅在用户明确授权后选 `parallel-worktree`。各模式的基线、Ownership、候选组装与冻结步骤只在 [`references/coordinator-protocol.md「三种并发 Profile」`](references/coordinator-protocol.md#三种并发-profile) 维护；派发时将所选模式全文附到相关 worker 的 spec。
+默认 `shared-serial`；普通文档的独立章节可选 `parallel-doc`（支持非 Git）；代码并行写入仅在用户明确授权后选 `parallel-worktree`。各模式的基线、Ownership、候选组装与冻结步骤只在 [`references/coordinator-protocol.md「三种并发 Profile」`](references/coordinator-protocol.md#三种并发-profile) 维护；派发时将所选模式全文附到相关 worker spec。
 
 典型依赖：
 
@@ -99,8 +92,9 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
 - 文档：researcher → planner → writers → fact-checker → 事实 owner 修正并复核（最多 2 轮）→ editor → 最终 fact-check（如编辑影响事实）→ 最终 reviewer →（复杂任务 red-team）→ 验收。
 - PPT：文档事实门后 slide-designer 生成最终 PPT/HTML/Marp 与渲染报告；随后 fact-checker 核对幻灯片文字/图表数据，再做冻结版本终审。
 - PRD 审计：requirement-auditor。用户自己写的 PRD 若 FIX-FIRST/BLOCKED，不派 worker 改 PRD；将方案 A/B 与待决项交用户确认，把决策写进下游 Constraints。
+- 多智能体 review：按 [`references/multi-agent-review.md`](references/multi-agent-review.md) 极速派发，≥2 个、默认 3 个不同家族只读审查 worker 并行；只派 1 个或 coordinator 亲自出结论均不合格。
 
-默认只对整合后的冻结版本做最终 reviewer 和 red-team；parallel-worktree 中局部审查可选且不能替代最终门。文档事实核查由 fact-checker 提供事实门，reviewer `SHIP` 不能覆盖未处理的 wrong/unsupported/outdated/link-broken。critical/major 风险未修时只可由用户或事先指定 risk owner 明确接受并留证。每个 `gate × review scope` 最多 2 轮修复；超限交用户。
+默认只对整合后的冻结版本做最终 reviewer 和 red-team；parallel-worktree 中局部审查可选且不能替代最终门。文档事实核查由 fact-checker 提供事实门，reviewer `SHIP` 不能覆盖未处理的 wrong/unsupported/outdated/link-broken。critical/major 风险未修时只可由用户或事先指定 risk owner 明确接受并留证。每个 `gate × review scope` 最多 2 轮修复；超限交用户。多智能体 review 的整合与禁止事项见 [`references/multi-agent-review.md`](references/multi-agent-review.md)。
 
 ## Orca orchestration Run/Task 编排
 
@@ -127,15 +121,15 @@ orca orchestration task-create --run <run_id> \
 | consumer_fenced | 旧 worker 立即停止；不得用旧 ID 发完成/重试消息 |
 | 空 wait/timeout/heartbeat | 是观察点，不代表失败；遵循 `references/recovery.md` |
 
-`worker_done succeeded` 仅代表 worker 完成角色任务并报告；不是测试 PASS、事实 PASS 或 reviewer SHIP。测试命令须记录实际 exit code；下游只按 coordinator ledger 的质量门状态前进，不伪造 Orca API 字段。完成报告发送后，worker 停止 check/轮询/新工作；完整规则见 `references/worker-lifecycle.md`。
+`worker_done succeeded` 仅代表 worker 完成角色任务并报告；不是测试 PASS、事实 PASS 或 reviewer SHIP。测试命令须记录实际 exit code；下游只按 coordinator ledger 的质量门状态前进，不伪造 Orca API 字段。多智能体 review 下全部 worker 完成后才整合，规则见 [`references/multi-agent-review.md`](references/multi-agent-review.md)；完成报告发送后，worker 停止 check/轮询/新工作，完整规则见 `references/worker-lifecycle.md`。
 
 ## 验收、交付、清理
 
 报告必须是实际存在的文件；`--report-path` 不可填目录。architect、reviewer、red-team 使用独占报告文件；幻灯渲染目录作为 artifact 单独列出。验收记录命令、cwd、时间、exit code、输入/输出 hash、报告路径及 `launch.effective`；报告缺失即不接受。
 
-终审只能审最终冻结版本的完整 diff、tracked/untracked manifest、artifact hash。新文件逐项检查，不能只用 `git diff --stat`。未授权默认不提交；若用户授权，只 stage 基线干净且 manifest 归属明确的路径。未提交 worktree 不能靠 merge 转移；按 manifest 逐文件/patch 转移并核 hash，或另请用户授权提交。交付路径转移后重新验收。
+终审只能审最终冻结版本的完整 diff、tracked/untracked manifest、artifact hash。新文件逐项检查，不能只用 `git diff --stat`。未授权默认不提交；若用户授权，只 stage 基线干净且 manifest 归属明确的路径。未提交 worktree 不能靠 merge 转移；按 manifest 逐文件/patch 转移并核 hash，或另请用户授权提交。转移后重新验收。
 
-`worker-list` 用 `--run <run_id>` 显式 scope 并分页直到结束；处理 active/reclaimable/retained/release_pending/release_unknown/released 和每项 `nextAction`。用户/预存/复用资源不强制关闭；release unknown 走 recovery guide，不能用 `terminal close` 替代。删除 worktree、文件、分支，push、PR、发布/分享均须分别得到用户授权。收尾和超时细节见 `references/coordinator-protocol.md`。
+`worker-list` 用 `--run <run_id>` 显式 scope 并分页直到结束；处理 active/reclaimable/retained/release_pending/release_unknown/released 和每项 `nextAction`。用户/预存/复用资源不强制关闭；release unknown 走 recovery guide，不能用 `terminal close` 替代。删除 worktree、文件、分支，push、PR、发布/分享均须分别得到用户授权。细节见 `references/coordinator-protocol.md`。
 
 ## 校验
 
@@ -146,4 +140,4 @@ node scripts/validate.mjs
 node --test tests/
 ```
 
-校验是静态文本契约检查和负例测试，不证明 Orca 运行时崩溃恢复、真实权限隔离、provider 合规、费用或 worker 诚实。每 Run 计划的 dispatch ceiling 由用户确认；临近额度时先停派并询问是否追加，不自动触顶后中断。
+校验是静态文本契约检查和负例测试，不证明 Orca 运行时崩溃恢复、真实权限隔离、provider 合规、费用或 worker 诚实。每 Run 计划的 dispatch ceiling 由用户确认（多智能体 review 极速模式默认 6，见 [`references/multi-agent-review.md`](references/multi-agent-review.md)）；临近额度时先停派并询问是否追加，不自动触顶后中断。
