@@ -1,12 +1,14 @@
 ---
 name: edx-orca-multi-model-orchestrator
 description: >-
-  在 Orca 中需要多个 agent 或模型协作完成代码、调研、文章、PPT 或 PRD 审计时使用；适用于用户说“用 Orca 多 agent”“多模型协作帮我”等情形。一个 agent 可独立完成的任务不要使用本 skill。
+  在 Orca 中需要多 agent/多模型协作代码、调研、文档、PPT 或 PRD 审计时使用，包括“多模型 review”。本 Skill 触发即走 orchestration；orca-cli 用于完整 handoff 或底层 terminal/worktree 控制。一个 agent 可独立完成的任务不要使用本 skill。
 ---
 
 # Orca 多模型总指挥
 
-你是 coordinator，负责拆解、模型路由、worker 派发、监督、质量门、整合、清理和汇报。Orca Run 是命名空间和收件箱，不会自行调度 worker。worker 生命周期遵循当前 Orca CLI 的版本匹配指南。
+你是 coordinator，负责 orchestration 拆解、模型路由、worker 派发、监督、质量门与整合。触发本 Skill 即使用 `orchestration`；按当前版本指南创建 Run/Task 并用 `worker-start` 启动角色 worker，之后跟进至验收和资源结算。Run 不会自行调度 worker。`orca-cli` 只用于完整 handoff 或底层 terminal/worktree 控制，不代替监督编排。
+
+每个 worker 必须核验 Dispatch receipt/handle。仅查 help/状态不算启动。启动失败或不确定时停止报告；禁止用 HTTP、gateway、`fetch`、`curl` 或 `ctx_execute` 调模型代做审查。`ctx_execute` 可做非推理分析。
 
 ## 使用前资料
 
@@ -14,22 +16,16 @@ description: >-
 - Orca 恢复、超时、request 和计划派发额度：[`references/recovery.md`](references/recovery.md)。
 - 协调器账本、基线、candidate/worktree 转移、质量门、终端资源和提交：[`references/coordinator-protocol.md`](references/coordinator-protocol.md)。
 - 常见厂商前缀、版本判断、已知 alias → 精确模型 ID → 家族，以及交叉审查候选顺序：[`references/model-catalog.md`](references/model-catalog.md)。
-- worker 公共生命周期：[`references/worker-lifecycle.md`](references/worker-lifecycle.md)。每次组装 spec 时把此文件全文附在角色前置提示词之后，不让 worker 依赖相对路径可访问性。
+- Orca 工具边界：[`references/agent-launch.md`](references/agent-launch.md)。监督式 worker spec 须附 [`references/worker-lifecycle.md`](references/worker-lifecycle.md)。
 - 逐项异常/验收走查：[`references/acceptance-scenarios.md`](references/acceptance-scenarios.md)。
 
 ## 预检
 
 开始前确定交付类型（代码 / 文档 / 混合）、目标和验收、风险、基线、数据策略及授权的 provider/family。敏感度、provider 或外网策略未知时不得派发。高风险/不可逆任务（删除、生产配置、安全/合规、对外发布）默认要求隔离 worktree 和已核实的 Manual permissions 或等效控制；worktree、Ownership 和提示词都不是权限沙箱。
 
-先确认使用同一个可执行文件，读取紧凑版本指南和实际 CLI help：
+启动规则见 [`references/agent-launch.md`](references/agent-launch.md)。先加载当前版本的 `orchestration` 指南并按其 supervised loop 执行；需要完整 handoff 或 terminal/worktree 操作时再调用 `orca-cli`。不要把 handoff 与 supervised worker 混成两条重复路径。
 
-```text
-orca skills get orchestration
-orca worktree current --json
-orca orchestration <command> --help
-```
-
-仅在具体恢复 gate 再读 `orca skills get orchestration --reference recovery-and-cleanup`。若当前 CLI 拒绝 `--reference`，才使用 `--full`。不得切换到另一个 Orca 可执行文件来绕过错误。
+先用环境变量或版本匹配指南确定唯一 Orca 可执行文件，并在所有后续命令中保持一致；不要切换到另一个可执行文件来绕过错误。恢复 gate 再读取指南指定的 recovery reference。
 
 记录 repo/workspace、HEAD/ref/SHA、`git status --porcelain=v1 -uall`、staged/unstaged diff、untracked 文件 hash、目标路径基线 hash、Ownership 和用户已确认的派发额度。无 Git 的文件夹记录文件清单/hash。若基线 dirty/untracked 与目标 Ownership 重叠或无法归因，停止并询问；禁止 restore/reset/stash/clean 或覆盖。将每 Run coordinator manifest/spec 放在 `.orca-notes/runs/<run-id>/`；只在 Git 仓库时 `.orca-notes/` 加入该仓库 `.git/info/exclude`，不改共享 `.gitignore`。manifest 不得记录 token 或不必要的敏感正文。
 
@@ -93,7 +89,7 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
 
 ## 拆解与执行计划
 
-先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试/fixture、报告和渲染输出。每条可写路径一个 owner；接口/目录交接用明确依赖。只为真实先后加边，依赖超过 4 层先解释原因。计划在启动前交用户确认，包含角色、准确模型 ID/family、authorFamilies、每个审查 gate 的候选排除、依赖、Ownership、profile、总 dispatch 估算及用户确认的 ceiling、验收与证据。
+先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试、报告和渲染输出；每条可写路径唯一 owner；依赖表示真实先后，超过 4 层先解释原因。启动前确认角色、模型/family、Ownership、profile、dispatch ceiling 和验收。只读 review 计划与数据策略确认后可创建 Run/Task 并派发 worker；写入、并行或高影响操作仍须相应授权。
 
 默认 `shared-serial`；普通文档的独立章节可选 `parallel-doc`（支持非 Git）；代码并行写入仅在用户明确授权后选 `parallel-worktree`。各模式的基线、Ownership、候选组装与冻结步骤只在 [`references/coordinator-protocol.md「三种并发 Profile」`](references/coordinator-protocol.md#三种并发-profile) 维护；派发时将所选模式全文附到相关 worker 的 spec。
 
@@ -106,9 +102,9 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
 
 默认只对整合后的冻结版本做最终 reviewer 和 red-team；parallel-worktree 中局部审查可选且不能替代最终门。文档事实核查由 fact-checker 提供事实门，reviewer `SHIP` 不能覆盖未处理的 wrong/unsupported/outdated/link-broken。critical/major 风险未修时只可由用户或事先指定 risk owner 明确接受并留证。每个 `gate × review scope` 最多 2 轮修复；超限交用户。
 
-## Orca 启动、spec 与监督
+## Orca orchestration Run/Task 编排
 
-先 `run-create` 得到 Run ID；Run 不会创建 worker。每个角色 spec 必须独立、自包含。不要将 spec 直接嵌入命令源码、使用 `eval` 或 shell xtrace；先写入 `.orca-notes/runs/<run_id>/specs/<task>.md`，记录 SHA-256 和输入 revision，再用当前 CLI 支持的 `--spec <text>` 以一个 quoted 参数传入：
+本 Skill 默认进入 supervised loop。先 `run-create` 得到 Run ID；Run 不会创建 worker。每个角色 spec 必须独立、自包含。不要将 spec 直接嵌入命令源码、使用 `eval` 或 shell xtrace；先写入 `.orca-notes/runs/<run_id>/specs/<task>.md`，记录 SHA-256 和输入 revision，再用当前 CLI 支持的 `--spec <text>` 以一个 quoted 参数传入：
 
 ```sh
 spec_file='.orca-notes/runs/<run_id>/specs/<task>.md'

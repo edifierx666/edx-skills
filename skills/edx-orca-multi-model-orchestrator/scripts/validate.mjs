@@ -183,6 +183,7 @@ export function validateDocuments(files) {
   const requiredReferences = [
     'references/install.md',
     'references/model-catalog.md',
+    'references/agent-launch.md',
     'references/recovery.md',
     'references/coordinator-protocol.md',
     'references/acceptance-scenarios.md',
@@ -234,11 +235,35 @@ export function validateDocuments(files) {
     ['SKILL.md', '账本同时记录原文件 SHA 和按相同读取方式得到的传入文本 SHA', 'spec-input'],
     ['SKILL.md', '`MAGPIE_BASE_URL`、`MAGPIE_TOKEN` 必须由用户/环境配置，缺失则停止', 'gateway-config'],
     ['SKILL.md', '只在 Git 仓库时 `.orca-notes/` 加入该仓库 `.git/info/exclude`，不改共享 `.gitignore`', 'local-ignore'],
-    ['SKILL.md', '依赖超过 4 层先解释原因', 'dependency-depth'],
+    ['SKILL.md', '超过 4 层先解释原因', 'dependency-depth'],
     ['SKILL.md', '默认只对整合后的冻结版本做最终 reviewer 和 red-team', 'review-timing'],
     ['SKILL.md', 'node scripts/validate.mjs\nnode --test tests/', 'validation-entry'],
     ['SKILL.md', '一个 agent 可独立完成的任务不要使用本 skill', 'skill-trigger'],
+    ['SKILL.md', '触发本 Skill 即使用 `orchestration`', 'orca-launch-routing'],
+    ['SKILL.md', '`orca-cli` 只用于完整 handoff 或底层 terminal/worktree 控制，不代替监督编排。', 'orca-cli-boundary'],
+    ['SKILL.md', '一个 agent 可独立完成的任务不要使用本 skill', 'skill-trigger'],
+    ['SKILL.md', '超过 4 层先解释原因', 'dependency-depth'],
+    ['SKILL.md', '每个 worker 必须核验 Dispatch receipt/handle。', 'launch-receipt'],
+
+    ['SKILL.md', '启动失败或不确定时停止报告', 'orca-launch-failure'],
+    ['SKILL.md', '禁止用 HTTP、gateway、`fetch`、`curl` 或 `ctx_execute` 调模型代做审查', 'direct-model-call'],
+    ['SKILL.md', '`ctx_execute` 可做非推理分析', 'analysis-tool-boundary'],
+
+    ['references/install.md', '多模型 review 默认创建 Run/Task 并用 `orchestration worker-start` 派发；只有用户明确要求完整 handoff 且不需要当前协调器跟进时才用 `orca-cli`。', 'orca-launch-routing'],
+    ['references/install.md', '启动路由：多模型 review 默认用 orchestration 创建 Run/Task 并用 worker-start 派发；只有完整 handoff 且当前不跟进时才用 orca-cli。', 'orca-launch-routing'],
+
+    ['references/install.md', 'Orca 启动失败或结果不确定时停止并报告，不要用 HTTP、本地 gateway 或 ctx_execute 调用模型代替 Agent。', 'direct-model-call'],
+    ['references/agent-launch.md', '若 Orca CLI 不可用、`worker-start` 被拒绝、模型解析失败、receipt 缺失或结果不确定，停止该角色', 'orca-launch-failure'],
+    ['references/agent-launch.md', '本 Skill 管理的是拆解、派工、等待、质量门和资源结算，因此多模型 review 与多 agent 协作默认使用当前版本 `orchestration` supervised loop', 'orca-launch-routing'],
+    ['references/agent-launch.md', '`orca-cli` 用于完整 handoff', 'orca-cli-boundary'],
+    ['references/agent-launch.md', '禁止用 `ctx_execute`、JavaScript `fetch`、`curl`、`child_process`、直接 HTTP 或本地 gateway 的 `/v1/chat/completions` 生成审查结论或替代角色交付。', 'direct-model-call'],
+
+    ['references/agent-launch.md', '`ctx_execute` 仍可用于不调用模型的本地分析', 'analysis-tool-boundary'],
+    ['references/agent-launch.md', '启动后核对 Dispatch receipt、outcome、Task/Dispatch ID 和 worker handle。', 'launch-receipt'],
+
+
     ['references/recovery.md', '连续 3 次 `check --wait` 返回空结果后', 'worker-supervision'],
+
     ['references/recovery.md', '立即向用户报告 Dispatch、等待原因及所需操作', 'worker-supervision'],
     ['references/recovery.md', '单 Task 默认最长监督时长 60 分钟', 'worker-timeout'],
     ['references/recovery.md', '不自动 stop、abandon、retry 或 release', 'worker-timeout'],
