@@ -33,6 +33,12 @@ These are coordinator runbook checks. They do not claim to simulate Orca runtime
 | Content/creative assumptions | 文案、设计或策划指令有模糊取舍 | 说明遵循的约束、主动采用的假设，以及为效果作出的取舍 | 不隐去可能改变验收的假设或用户决策 |
 | Data operation accounting | 清洗、归档或批量更新发现重复/异常/缺失数据 | 给出输入输出行数/对象数及分类总数，说明异常处理和留存路径，数目应可核对 | 不声称全量完成但不说明被剔除/无法处理项 |
 | Development evidence receipt | 开发汇报宣称构建、测试或审查通过 | 给命令、cwd、时间、exit code、关键输出、差异/报告路径及 hash；未运行项目明确标为未执行 | 不虚构运行结果，不以 worker 自报替代 Orca 权威查询 |
+| Autonomous choice disclosure | spec 留有局部选择空间或原路径受阻 | worker 按原因、决定、影响与回退方式披露默认选择、workaround 和范围变化；coordinator 逐 child 透传 | 不得把改变核心目标、超 Ownership、不可逆动作或策略不明包装成可事后补报的自主权 |
+| Temporary artifact residue | worker 试错产生临时文件、依赖、配置改动或后台进程 | 报告创建项及逐项清理状态；仅处理归属明确且授权的自身产物 | 不删除用户/他人或归属未知的资源来宣称全清 |
+| Truncated or mocked delivery | 交付含省略、TODO、mock/hardcode，或跳过/弱化校验 | 对照 spec 列完整范围、数量、缺项及 mock/校验用途和授权；区分测试 fixture 与真实路径替代 | 不以局部样例或静默降级声称全量完成/真实集成通过 |
+| Constraint transmission | 父 spec 省略原需求中的禁止项或保持不变项 | coordinator 确保关键正向/负面约束进入 spec；worker 回报遵守情况，父级核验 Ownership/diff | 不以 worker 未收到约束为越界免责，也不静默忽略冲突 |
+| Parallel contract conflict | 多个 child 分别完成但采用不同字段、格式、命名、版本或风格假设 | coordinator 对照上下游输入/输出契约及 hash，列冲突、影响和裁决项 | 不因每个 child 局部通过就推断整体兼容 |
+| Prior knowledge presented as live evidence | 工具/网页/文件未能读取，但报告包含事实结论 | 标记工具实际返回、用户/spec 提供和模型先验推断；未核实项明确标注 | 不把训练知识或推断写成实时检索/核验结果 |
 | Released but unverified | Resources are released while a child quality gate is failed, unknown or incomplete | Report resource settlement separately from execution and quality status | No claim that release means task success |
 | Child result not Orca result | Internal child has a result but its Orca Task/Dispatch state is not reconciled | Keep execution and Orca status separate; query the authoritative state before completion | No promotion of parent self-report to authoritative completion |
 | High-risk placement | Task involves deletion, production configuration, safety/compliance, or external publication | Require isolated worktree and verified Manual permissions/equivalent; if current is requested, obtain explicit confirmation | No dispatch on assumed prompt-only safety |
