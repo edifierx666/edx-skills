@@ -47,6 +47,18 @@ mutation 响应丢失时先调用 `request-show`。`completed` 读取原回执�
 
 所有支持 `--run` 的 Task/worker/check/list 查询显式传当前 Run ID。run-create 仅建立 Run namespace/inbox，不负责创建或调度 worker。worker-start 必须另行执行，且显式指定 placement。
 
+## Child 对账与整体状态
+
+父 coordinator 在任何整体汇报、最终整合或质量门结论前，必须按 manifest 逐项核对每个必需 child、关联的 Task/Dispatch/attempt 和父 worker 报告；不能只统计收到的 `worker_done` 数量，也不能把父 worker 的一句摘要当作 child 完成证据。每一项至少保留内部 child 状态、Orca 原始回执/查询结果、报告或结果路径、输入/输出 hash、错误/恢复事件和最近可读证据。
+
+Orca 的 Task/Dispatch 状态始终以当前版本回执和查询为准，不在本协议中假设完整终态枚举。coordinator 可以做不冒充 Orca 字段的本地归类：`not_started | nonterminal | terminal_succeeded | terminal_failed | terminal_other | unknown`。内部 child 则单独使用 `not_started | running | completed | failed | blocked | unknown`；工具调用失败事件不替代任一层的状态查询。
+
+整体执行状态只按以下本地语义汇报：全部必需 child 有可核验最终结果、每个关联 Orca 状态已对账且证据齐全时才可为 `complete`；有完成项和未完成/失败项为 `partial`；没有完成的必需项为 `incomplete`；任一必需项无法确认且影响结论为 `unknown`。若账本和 Orca 状态无法对齐，整体状态不得为 `complete`。
+
+执行结案、质量门和资源结算是三条独立状态轴：`execution_status` 表示是否完成并提交产物；`verification_status`、`review_verdict`、`fact_status` 表示测试/审查/事实门；`worker-list` 的 `active`、`reclaimable`、`retained`、`release_pending`、`release_unknown`、`released` 只表示资源处置。`released` 不代表任务通过，`retained` 不代表 worker 完成，资源已结算也不代表质量门通过。
+
+当状态为 `partial`、`incomplete` 或 `unknown` 时，用户可见汇报第一行必须写明“未形成可信的整体完成结论”，并至少包含：计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据；每个内部 child 的状态、错误/恢复摘要、结果或缺失证据；`execution_status`、`verification_status`、`review_verdict`、`fact_status`；未完成项、原因和下一步。已完成 child 的结果可以单独展示，但不得写成整体 PASS、SHIP 或完成。
+
 ## 完成状态与质量门
 
 `worker_done --outcome succeeded` 表示 worker 已完成其角色任务并提交报告，不等于交付质量通过。合法 worker_done 会自动结算 Orca Task；不要用 `task-update completed` 冒充验收。

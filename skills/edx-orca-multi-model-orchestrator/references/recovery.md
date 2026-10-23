@@ -9,6 +9,14 @@ Orca 版本匹配指南优先。预检只读取 `orca skills get orchestration`�
 - 连续 3 次 `check --wait` 返回空结果后，对每个仍运行 Dispatch 调 `worker-show --dispatch <id> --json`。`observation.agentWait` 非空表示停在需要人类处理的 prompt，立即向用户报告 Dispatch、等待原因及所需操作，不能仅继续空等；若字段缺失或 observation 不可验证，按未知处理。不要把 null 与缺字段混为一谈。
 - `outcome_unknown`、超时、断线、`unverifiable`、TUI idle 或空 transcript 不是失败证明。先用 `worker-list`、`worker-show`、`worker-read` 和 request receipt 查证；只有 recovery guide 指示的正向证据允许 stop/retry/release。
 
+## Worker 内部工具失败
+
+- worker 已启动后的工具错误先记入内部执行事件，再判断是否有可核验的后续结果；不得把 `InputValidationError`、命令非零、文件不存在或 hook 错误直接映射为 Orca Task/Dispatch 终态。
+- 区分四种情况：调用未启动；命令已执行但非零；错误后仍产生可核验最终结果；错误后没有可核验最终结果。最后一种将依赖该调用的 child 标为 `unknown`，停止宣称整体完成并按需要 escalation；不能用后续摘要猜测 child 已完成。
+- 只有能证明调用未启动、没有副作用且该工具契约允许时，才可修正输入后有限重试。不得盲目重试、静默换模型/Agent 或并行重复执行；继续执行后续独立工作不等于原调用成功。
+- 允许的 fallback 必须在任务计划中声明，并记录新旧 attempt 的关系、错误、恢复结果和未执行项。原结果可能有副作用且无法确认时，先用适用的权威机制对账；没有唯一证据时暂停依赖该结果的工作。
+- 父 worker 在内部 child 没有最终结果、报告缺失或状态无法确认时，必须输出 partial、incomplete 或 unknown 的用户可见汇报，重点列出未完成项；不得用新 Task、新模型或父级代做掩盖原 child 状态。
+
 ## 重试与修复轮次
 
 - 为每个 `gate × review scope` 独立计修复轮次，最多 2 轮；包括 reviewer FIX-FIRST、测试失败修复、文档事实核查修复。达到上限或仍未通过时停止并把证据与选择交用户。

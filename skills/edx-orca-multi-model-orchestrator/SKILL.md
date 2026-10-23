@@ -113,6 +113,8 @@ orca orchestration task-create --run <run_id> \
 
 一个 coordinator 负责一个 Run。收到 Delivery 后按 `runId + deliveryId + messageId` 去重：写 intent、执行副作用、保存回执/ID、标记 acted，再处理完整批次并 ack。响应丢失先 `request-show`；pending 仅以同 request ID 原样精确重放一次；absent 不是未执行证明。无法唯一对账时暂停 ack、dispatch、retry、release 与其他 mutation，不发新 request 猜测重做。本地 ledger 不保证 exactly-once。
 
+汇报前按 manifest 核对 worker/Task/Dispatch 和 child;必需 child 未完成、失败、阻塞、未知或缺证据时,首行写"未形成可信的整体完成结论",不得写成 PASS、SHIP 或完成。
+
 | 消息/事件 | 协调器动作 |
 | --- | --- |
 | question | 对原 message ID 回复；同一问题重放不重复回复 |

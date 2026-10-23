@@ -200,6 +200,11 @@ test('完成与质量门缺失', () => {
   files.set('references/coordinator-protocol.md', files.get('references/coordinator-protocol.md').replaceAll('verification_status', 'other_status'));
   reject(files, 'contract');
 });
+test('工具错误不能冒充 Orca 终态', () => reject(mutate(original, 'references/worker-lifecycle.md', '工具调用失败不等于 Orca Task/Dispatch 终态', '工具调用失败就是 Orca Task/Dispatch 终态'), 'tool-failure-state'));
+test('工具失败不得盲目重试或静默 fallback', () => reject(mutate(original, 'references/recovery.md', '只有能证明调用未启动、没有副作用且该工具契约允许时', '所有工具错误都可自动重试'), 'tool-retry-safety'));
+test('父 worker 必须逐项对账 child', () => reject(mutate(original, 'references/coordinator-protocol.md', '必须按 manifest 逐项核对每个必需 child', '可以只统计收到的 worker_done 数量'), 'child-accounting'));
+test('未知 child 禁止整体完成', () => reject(mutate(original, 'references/coordinator-protocol.md', '若账本和 Orca 状态无法对齐，整体状态不得为 `complete`', '即使账本和 Orca 状态无法对齐也可以为 `complete`'), 'incomplete-aggregation'));
+test('部分汇报必须显式告知用户', () => reject(mutate(original, 'references/coordinator-protocol.md', '未形成可信的整体完成结论', '可以省略整体完成可信度说明'), 'partial-reporting'));
 test('清理丢失分页约束', () => reject(mutate(original, 'references/coordinator-protocol.md', 'page.nextCursor', 'cursor'), 'contract'));
 test('错误恢复 coder 测试职责', () => {
   const files = clone(original);
@@ -237,10 +242,14 @@ const boundaryMutations = [
   ['极速 review reference 禁止自审', 'references/multi-agent-review.md', 'coordinator 不得亲自阅读被审代码或需求文档后直接输出审查结论，代替 worker。', 'coordinator 可直接阅读代码输出审查结论。', 'coordinator-no-self-review'],
   ['极速 review reference 禁止伪造多智能体', 'references/multi-agent-review.md', '不得用 1 个 worker 的结果复制成多份报告，冒充多智能体交叉审查。', '可用 1 个 worker 结果拆成多份报告。', 'multi-agent-no-fake-parallel'],
   ['极速 review 免计划阻塞', 'references/multi-agent-review.md', '不需要用户先批准角色/模型/Ownership 计划', '必须先停下等用户批准计划', 'multi-agent-no-plan-gate'],
+  ['极速 review 必须逐项完成', 'references/multi-agent-review.md', '每个 reviewer 都是 manifest 中的必需 child', '只看到父 worker 的 worker_done 就算 reviewer 完成', 'child-accounting'],
+  ['极速 review 未完成不得出最终结论', 'references/multi-agent-review.md', '不能输出最终整合 verdict', '可以用部分 reviewer 结果输出最终整合 verdict', 'incomplete-aggregation'],
   ['单 Agent 任务不触发本 Skill', 'SKILL.md', '一个 agent 可独立完成的任务不要使用本 skill', '所有任务都使用本 skill', 'skill-trigger'],
   ['确认实际 Dispatch receipt', 'SKILL.md', '每个 worker 必须核验 Dispatch receipt/handle。', '检查 --help 后即可视为启动成功。', 'launch-receipt'],
 
   ['启动失败后停止报告', 'SKILL.md', '启动失败或不确定时停止报告', '启动失败时改用本地 gateway', 'orca-launch-failure'],
+  ['父 worker 汇报前逐项核对 child', 'references/coordinator-protocol.md', '必须按 manifest 逐项核对每个必需 child', '可以只统计收到的 worker_done 数量', 'child-accounting'],
+  ['部分状态优先告知用户', 'references/coordinator-protocol.md', '未形成可信的整体完成结论', '可以省略整体完成可信度说明', 'partial-reporting'],
   ['禁止直连模型 API 代做审查', 'SKILL.md', '禁止用 HTTP、gateway、`fetch`、`curl` 或 `ctx_execute` 调模型代做审查', '可以用 HTTP 或 gateway 生成替代审查结论', 'direct-model-call'],
   ['保留 ctx_execute 非推理用途', 'SKILL.md', '`ctx_execute` 可做非推理分析', '禁止使用 ctx_execute 做任何分析', 'analysis-tool-boundary'],
 
@@ -255,6 +264,8 @@ const boundaryMutations = [
 
   ['安装模板禁止 API 回退', 'references/install.md', 'Orca 启动失败或结果不确定时停止并报告，不要用 HTTP、本地 gateway 或 ctx_execute 调用模型代替 Agent。', 'Orca 启动失败后可用 HTTP 或本地 gateway 代替 Agent。', 'direct-model-call'],
   ['三次空 wait 检查', 'references/recovery.md', '连续 3 次 `check --wait` 返回空结果后', '无限等待', 'worker-supervision'],
+  ['工具失败安全分流', 'references/recovery.md', 'worker 已启动后的工具错误先记入内部执行事件', '工具错误直接映射为 Orca Task/Dispatch 终态', 'tool-failure-state'],
+  ['工具重试安全', 'references/recovery.md', '只有能证明调用未启动、没有副作用且该工具契约允许时', '所有工具错误都可自动重试', 'tool-retry-safety'],
 
   ['等待 prompt 立即通知', 'references/recovery.md', '立即向用户报告 Dispatch、等待原因及所需操作', '继续空等', 'worker-supervision'],
   ['Task 超时时限', 'references/recovery.md', '单 Task 默认最长监督时长 60 分钟', '单 Task 无限运行', 'worker-timeout'],
@@ -265,6 +276,8 @@ const boundaryMutations = [
   ['用户确认派发额度', 'references/recovery.md', '该 ceiling 是经过用户确认的执行额度', '该 ceiling 是固定的自动额度', 'dispatch-budget'],
   ['临近额度先停派', 'references/recovery.md', '停止新派发，列出剩余工作并询问是否增加额度', '继续派发直到额度耗尽', 'dispatch-budget'],
   ['修复按关卡与范围计数', 'references/coordinator-protocol.md', '每个 `gate × review scope` 的修复轮次分别计数，最多 2 轮', '允许无限修复', 'repair-budget'],
+  ['Child 状态聚合门', 'references/coordinator-protocol.md', '全部必需 child 有可核验最终结果、每个关联 Orca 状态已对账且证据齐全时才可为 `complete`', '只要父 worker 有摘要就可为 `complete`', 'incomplete-aggregation'],
+  ['部分状态汇报字段', 'references/coordinator-protocol.md', '计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据', '只汇报一个整体状态', 'partial-reporting'],
   ['PPT 后置事实门', 'references/coordinator-protocol.md', 'PPT worker 完成并冻结产物后，coordinator 必须再派 fact-checker 核对幻灯片文本、图表标签和数据', 'PPT 视觉自查后直接交付', 'ppt-facts'],
   ['PRD 结论枚举', 'roles/requirement-auditor.md', '- `--body` 第一行写 `VERDICT: SHIP`', '- `--body` 第一行写 `VERDICT: PASS`', 'prd-verdict'],
   ['用户 PRD 不代改', 'roles/requirement-auditor.md', 'coordinator 不得转派 worker 修改用户 PRD', 'coordinator 可转派 worker 修改用户 PRD', 'prd-ownership'],

@@ -227,6 +227,11 @@ export function validateDocuments(files) {
     [protocol, '无法唯一确认时暂停 ack、dispatch、retry、release 及其他写操作', 'unknown-mutation'],
     [protocol, '任何修复都使对应测试、事实核查或审查证据失效', 'revision-guard'],
     [lifecycle, '完成报告发送后停止 check、轮询和新工作', 'completion-guard'],
+    [lifecycle, '工具调用失败不等于 Orca Task/Dispatch 终态', 'tool-failure-state'],
+    [lifecycle, '父 worker 必须逐项登记每个必需和可选 child', 'child-accounting'],
+    [protocol, '必须按 manifest 逐项核对每个必需 child', 'child-accounting'],
+    [protocol, '未形成可信的整体完成结论', 'partial-reporting'],
+    [protocol, '若账本和 Orca 状态无法对齐，整体状态不得为 `complete`', 'incomplete-aggregation'],
   ];
   for (const [text, sentence, code] of fixedContracts) if (!text.includes(sentence)) fail(code, `固定契约缺失或被改写：${sentence}`);
 
@@ -250,6 +255,8 @@ export function validateDocuments(files) {
     ['references/multi-agent-review.md', 'coordinator 不得亲自阅读被审代码或需求文档后直接输出审查结论，代替 worker。', 'coordinator-no-self-review'],
     ['references/multi-agent-review.md', '不得用 1 个 worker 的结果复制成多份报告，冒充多智能体交叉审查。', 'multi-agent-no-fake-parallel'],
     ['references/multi-agent-review.md', '不需要用户先批准角色/模型/Ownership 计划', 'multi-agent-no-plan-gate'],
+    ['references/multi-agent-review.md', '每个 reviewer 都是 manifest 中的必需 child', 'child-accounting'],
+    ['references/multi-agent-review.md', '不能输出最终整合 verdict', 'incomplete-aggregation'],
     ['SKILL.md', '一个 agent 可独立完成的任务不要使用本 skill', 'skill-trigger'],
     ['SKILL.md', '超过 4 层先解释原因', 'dependency-depth'],
     ['SKILL.md', '每个 worker 必须核验 Dispatch receipt/handle。', 'launch-receipt'],
@@ -272,6 +279,8 @@ export function validateDocuments(files) {
 
 
     ['references/recovery.md', '连续 3 次 `check --wait` 返回空结果后', 'worker-supervision'],
+    ['references/recovery.md', 'worker 已启动后的工具错误先记入内部执行事件', 'tool-failure-state'],
+    ['references/recovery.md', '只有能证明调用未启动、没有副作用且该工具契约允许时', 'tool-retry-safety'],
 
     ['references/recovery.md', '立即向用户报告 Dispatch、等待原因及所需操作', 'worker-supervision'],
     ['references/recovery.md', '单 Task 默认最长监督时长 60 分钟', 'worker-timeout'],
@@ -282,6 +291,8 @@ export function validateDocuments(files) {
     ['references/recovery.md', '该 ceiling 是经过用户确认的执行额度', 'dispatch-budget'],
     ['references/recovery.md', '停止新派发，列出剩余工作并询问是否增加额度', 'dispatch-budget'],
     ['references/coordinator-protocol.md', '每个 `gate × review scope` 的修复轮次分别计数，最多 2 轮', 'repair-budget'],
+    ['references/coordinator-protocol.md', '全部必需 child 有可核验最终结果、每个关联 Orca 状态已对账且证据齐全时才可为 `complete`', 'incomplete-aggregation'],
+    ['references/coordinator-protocol.md', '计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据', 'partial-reporting'],
     ['references/coordinator-protocol.md', 'PPT worker 完成并冻结产物后，coordinator 必须再派 fact-checker 核对幻灯片文本、图表标签和数据', 'ppt-facts'],
     ['roles/requirement-auditor.md', '- `--body` 第一行写 `VERDICT: SHIP`', 'prd-verdict'],
     ['roles/requirement-auditor.md', 'coordinator 不得转派 worker 修改用户 PRD', 'prd-ownership'],

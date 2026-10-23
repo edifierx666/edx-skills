@@ -49,10 +49,13 @@ reviewer 必须排除被审范围的 authorFamilies。本模式被审范围是�
 
 ## 整合纪律
 
-- 三个 worker 全部 `worker_done` 后，coordinator 才输出整合结论；不等部分结果提前汇报。
+- 每个 reviewer 都是 manifest 中的必需 child，必须有可核验终态、独占报告、输入/输出证据和与当前 revision 对应的 hash；只看到父 worker 的 `worker_done` 或聚合摘要不算 reviewer 完成。
+- 三个 worker 全部 `worker_done` 且逐项对账完成后，coordinator 才输出最终整合结论；不等部分结果提前汇报。等待全部完成不等于无限等待：超时、空 wait、停在 prompt、fenced、失败、状态未知或报告缺失都必须进入状态清单。
+- 若任一必需 reviewer 或其内部 validator/angle child 未完成、失败、阻塞、未知或证据不足，coordinator 只能输出带逐项清单的 `partial`、`incomplete` 或 `unknown` 汇报，第一行明确“未形成可信的整体完成结论”，不能输出最终整合 verdict。
+- 已完成 reviewer 的发现可以临时展示，但必须标明覆盖范围、缺失 child、未完成验证和“不代表最终审查结论”；不得将部分结果包装成 PASS 或 SHIP。
 - 整合时按问题去重、按严重度排序，标明每条问题来自哪个 worker 与 `file:line` / 文档章节。
 - worker 结论冲突时不自行裁决为“已接受”：列出分歧与各自证据，交用户决定。
-- `worker_done succeeded` 只代表审查完成，不代表 `SHIP`；最终门禁按 `references/coordinator-protocol.md` 的质量门记录。
+- `worker_done succeeded` 只代表审查角色完成并提交报告，不代表 `SHIP`；最终门禁按 `references/coordinator-protocol.md` 的质量门记录。
 
 ## 禁止事项
 
