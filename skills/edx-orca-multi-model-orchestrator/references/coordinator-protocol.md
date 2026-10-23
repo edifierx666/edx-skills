@@ -105,7 +105,13 @@ PPT worker 完成并冻结产物后，coordinator 必须再派 fact-checker 核�
 
 ## 收尾、提交与清理
 
-以 `orca orchestration worker-list --run <run_id> --include-remote --limit <1-100> --json` 枚举资源；按返回的 `page.nextCursor` 原样继续，直到无下一页。逐项分类 `active`、`reclaimable`、`retained`、`release_pending`、`release_unknown`、`released`，检查 `projection.nextAction` 并按当前 recovery guide 处理。`release_pending` / `release_unknown` 必须按回执恢复，绝不用 `terminal close` 替代。Orca 证明是预存、复用、setup、coordinator、用户接管或其他不归本 Dispatch 所有的终端可以保留，但记录依据；不为清空列表而强制关闭。未解决的 active 或 release 状态不得汇报资源已完全结算。
+以 `orca orchestration worker-list --run <run_id> --include-remote --limit <1-100> --json` 枚举资源；按返回的 `page.nextCursor` 原样继续，直到无下一页。逐项分类 `active`、`reclaimable`、`retained`、`release_pending`、`release_unknown`、`released`，检查 `projection.nextAction` 并按当前 recovery guide 处理。
+
+**谁启动谁负责结算**：coordinator 对自己启动的 worker 负责盘点并处理资源结算。每个 settled Dispatch 都要选择复用、按用户要求保留，或按当前版本 `orchestration` 指南执行 `worker-release`；不复用且确认归当前 Dispatch 所有的终端，不得因默认含糊而长期搁置。`projection.nextAction` 是建议而非执行证明；只有 mutation 回执或后续权威查询确认后才能记为已释放。
+
+保留资源必须逐项记录依据，例如预存、复用、setup、coordinator 自用、用户明确接管，或已证明不归本 Dispatch 所有；保留的终端不能汇报成已关闭。`release_pending` / `release_unknown` 必须沿当前 recovery guide 按回执对账恢复，绝不用 `terminal close` 替代。无法唯一确认时暂停相关 mutation 并升级给用户。保留现有边界：不为清空列表而强制关闭不归本 Dispatch 所有的资源。
+
+执行、质量和资源状态分开汇报：`released` 不代表任务通过，`retained` 不代表 worker 未完成，worker 完成也不代表终端已释放。存在 `active`、`reclaimable` 或未解决的 release 状态时，不得声称资源已完全结算。
 
 整合前运行 `git status --porcelain=v1 -uall`、检查 staged/unstaged diff，并逐项列出每个 untracked 文件及 hash。不能只用 `git diff --stat`，因为新文件不会出现在其中。对任何无关 `.orca-notes/` 内容不得 stage。无授权时默认不提交，保留未提交结果并汇报 ref/status。仅用户明确授权 commit 后，coordinator 才能对基线干净、归属明确的 manifest 路径执行 `git add -- <paths>`；任何基线 dirty/untracked 路径重叠或归属不明都阻断提交。shared 与 worktree 模式适用同一提交规则；最终记录 commit/ref，不能假定 fast-forward merge 一定产生 commit。
 

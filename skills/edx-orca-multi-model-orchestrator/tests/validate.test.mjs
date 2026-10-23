@@ -289,11 +289,40 @@ const boundaryMutations = [
   ['PPT 后置事实门', 'references/coordinator-protocol.md', 'PPT worker 完成并冻结产物后，coordinator 必须再派 fact-checker 核对幻灯片文本、图表标签和数据', 'PPT 视觉自查后直接交付', 'ppt-facts'],
   ['PRD 结论枚举', 'roles/requirement-auditor.md', '- `--body` 第一行写 `VERDICT: SHIP`', '- `--body` 第一行写 `VERDICT: PASS`', 'prd-verdict'],
   ['用户 PRD 不代改', 'roles/requirement-auditor.md', 'coordinator 不得转派 worker 修改用户 PRD', 'coordinator 可转派 worker 修改用户 PRD', 'prd-ownership'],
+
+  // 透明汇报契约
+  ['报告适用范围', 'references/worker-lifecycle.md', 'coordinator 的本地报告格式，不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', '仅适用于 partial 状态', 'report-scope'],
+  ['交付结论把握度', 'references/worker-lifecycle.md', '交付结论与把握度', '只需交付结论', 'report-confidence'],
+  ['执行轨迹与行动足迹', 'references/worker-lifecycle.md', '执行轨迹与行动足迹', '只需最终状态', 'report-trace'],
+  ['可抽检凭证', 'references/worker-lifecycle.md', '可抽检凭证', '无需凭证', 'report-evidence'],
+  ['核心取舍与隐式假设', 'references/worker-lifecycle.md', '核心取舍与隐式假设', '无需记录假设', 'report-assumptions'],
+  ['盲区与待确认项', 'references/worker-lifecycle.md', '盲区与待确认项', '不必列盲区', 'report-blind-spots'],
+  ['Complete 证据齐全门槛', 'references/worker-lifecycle.md', '仅在所有必需 child 有可核验最终结果、关联 Orca 状态已对账且证据齐全时成立', '只需 worker_done 即可标为 complete', 'report-complete-gate'],
+
+  // 资源责任契约
+  ['Coordinator 资源责任', 'references/coordinator-protocol.md', 'coordinator 对自己启动的 worker 负责盘点并处理资源结算', 'worker 自行结算资源', 'resource-owner'],
+  ['NextAction 非执行证明', 'references/coordinator-protocol.md', '`projection.nextAction` 是建议而非执行证明', '`projection.nextAction` 是已执行状态', 'resource-action-evidence'],
+  ['保留依据记录', 'references/coordinator-protocol.md', '保留资源必须逐项记录依据', '保留资源无需记录依据', 'resource-retain-reason'],
+  ['资源状态分离', 'references/coordinator-protocol.md', '`released` 不代表任务通过，`retained` 不代表 worker 未完成，worker 完成也不代表终端已释放', '`released` 代表任务通过', 'resource-state-separation'],
+  ['释放未知状态按回执恢复', 'references/coordinator-protocol.md', '`release_pending` / `release_unknown` 必须沿当前 recovery guide 按回执对账恢复，绝不用 `terminal close` 替代', 'release_unknown 时直接 terminal close', 'resource-release-recovery'],
+  ['SKILL 入口引用透明汇报契约', 'SKILL.md', '所有结论都按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`交代把握度、假设、行动足迹、抽检凭证和盲区', '所有结论只给最终摘要', 'report-scope'],
+  ['SKILL 入口强调 worker 资源责任', 'SKILL.md', 'coordinator 对自己启动的 worker 负责结算', 'worker 完成后无人负责结算资源', 'resource-owner'],
+  ['资源验收场景禁止误认 nextAction 已执行', 'references/acceptance-scenarios.md', 'nextAction只是建议；未经回执/查询确认不能记为已释放', '看到 nextAction 即记为已释放', 'resource-action-evidence'],
 ];
 for (const [label, path, from, to, code] of boundaryMutations) {
   test(`${label}：有效规则通过`, () => assert.ok(!validateDocuments(original).some(error => error.startsWith(`${code}:`))));
   test(`${label}：删除或反转规则时拒绝`, () => reject(mutate(original, path, from, to), code));
 }
+test('角色专属 worker_done 格式不扩散整体汇报模板', () => {
+  const originalPrompt = '<role_prompt role="writer" name="撰稿人">';
+  const expandedPrompt = `${originalPrompt}\n  <report_contract>## Coordinator 用户可见汇报契约：交付结论与把握度、执行轨迹与行动足迹、可抽检凭证、核心取舍与隐式假设、盲区与待确认项</report_contract>`;
+  reject(mutate(original, 'roles/writer.md', originalPrompt, expandedPrompt), 'role-report-isolation');
+});
+
+test('worker Done body中三句话仍在 coder 角色，不进入 lifecycle 通用契约', () => {
+  assert.ok(original.get('roles/coder.md').includes('`--body`：三句话'));
+  assert.ok(!original.get('references/worker-lifecycle.md').includes('`--body`：三句话'));
+});
 for (const role of ['coder', 'frontend']) {
   test(`${role} 允许待更新测试但禁止假绿`, () => assert.deepEqual(validateDocuments(original), []));
   test(`${role} 删除测试状态区分时拒绝`, () => reject(mutate(original, `roles/${role}.md`, '必须记录 `verification_status=failed`', '记录测试通过'), 'implementation-gate'));

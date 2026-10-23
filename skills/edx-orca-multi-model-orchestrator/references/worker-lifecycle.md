@@ -13,3 +13,15 @@
 - `--report-path` 必须指向实际存在的报告文件，不能填目录。只读角色只可写 spec 明确独占的 report-file Ownership；artifact/render/测试输出目录另列并授权。未经授权不运行会写入其他路径的检查，不清理别人改动以伪造干净状态。
 - 参与 reviewer、fact-checker、editor 或 red-team 时，spec 必须提供该输入范围的 authorFamilies（所有实际内容作者已核实 effective family 的并集，含测试、编辑、修复及整合作者）。前三者排除整个 authorFamilies，红方另排除相关 reviewer family 集合；集合缺失、家族未知或自身命中禁用集合时先 ask 并停止该阶段，不能自动拆审冒充整体终审。
 - 所有模式包括 worktree 均默认不 commit、不执行 git 写操作、不越界。worktree 与提示词不是权限沙箱；数据/provider policy 未确认、权限控制未核实或出现基线重叠时停止并 ask。不得自行更改权限设置。修复后旧验收证据失效，等待新 revision。
+
+## Coordinator 用户可见汇报契约
+
+这是 coordinator 的本地报告格式，不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论。报告按任务复杂度展开或合并以下五个锚点：
+
+1. **交付结论与把握度**：写本地整体状态、核心产出、已核实事项、假设、待确认项和判定理由。把握度使用“高把握”“存在部分推测”或“信息源受限仅作参考”；不得把推测包装成确定事实。
+2. **执行轨迹与行动足迹**：写计划任务总数与状态计数；每个 Task/Dispatch/attempt 的 Orca 原始状态及查询/回执依据；派发的角色、修改的文件/产物和实际执行的命令。未执行事项必须写“未执行”。
+3. **可抽检凭证**：写报告绝对路径与 hash、输入/输出 hash、关键命令、cwd、时间、exit code、关键输出/证据路径和 `launch.effective`。调研/分析类补原始出处、关键摘录或链接；内容类说明约束对齐；操作类给 diff/真实返回。摘要不替代原始证据，敏感值必须脱敏。
+4. **核心取舍与隐式假设**：暴露模糊指令下的默认标准、模型/并发/范围假设，记录工具失败、死胡同、转向和 fallback 及其覆盖影响。
+5. **盲区与待确认项**：列未验证、无法确认、证据缺口、超出范围的事项、潜在风险、下一步和需要用户拍板的动作。
+
+`complete` 仅在所有必需 child 有可核验最终结果、关联 Orca 状态已对账且证据齐全时成立；不完整结论仍须首行写“未形成可信的整体完成结论”。`worker_done`、工具错误和 projection 不能替代 Orca 状态或原始凭证。

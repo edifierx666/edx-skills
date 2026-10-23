@@ -26,6 +26,13 @@ These are coordinator runbook checks. They do not claim to simulate Orca runtime
 | Acked, ledger not acked | Process stopped after ack but before local ack record | Query authoritative state and repair bookkeeping only | No repeat of business side effect |
 | Paginated cleanup | First `worker-list` page has a next cursor or unresolved states | Continue each page using exact opaque cursor; follow `nextAction` and release recovery guide | No claim of complete settlement while active/pending/unknown resources remain |
 | User-owned terminal | Resource is pre-existing, reused, setup, coordinator-owned, or user-taken-over | Preserve it and record why it is outside this Dispatch's release ownership | No force close to make a filtered list empty |
+| Resource owner responsibility | Coordinator启动的worker由该coordinator负责盘点与结算 | 分页列举worker-list，逐项按nextAction与recovery guide处理；settled Dispatch选择复用/保留/释放，不复用且归属本Dispatch的不得搁置 | nextAction只是建议；未经回执/查询确认不能记为已释放 |
+| Retain reason missing | 保留资源未记录依据（预存/复用/setup/coordinator自用/用户接管/不归本Dispatch所有） | 逐项记录保留理由与证据，保留的终端不能汇报成已关闭 | 不记录依据或记为"保留"但无具体理由 |
+| Coordinator reporting without evidence | 任何任务类型的汇报只给结论，不披露假设、实际行动、凭证或盲区 | 使用 worker-lifecycle「Coordinator 用户可见汇报契约」的五个锚点；标出自报与 Orca 查询边界、未执行项、待确认项 | 不把“已核实/全面完成”等措辞当成证据 |
+| Research/analysis confidence | 调研/分析结论含来源差异或时效性未知 | 对每个关键结论附原始来源、关键摘录/链接、日期和把握度；暴露代理数据、来源缺口等假设 | 不把来源受限的推测写成确定事实 |
+| Content/creative assumptions | 文案、设计或策划指令有模糊取舍 | 说明遵循的约束、主动采用的假设，以及为效果作出的取舍 | 不隐去可能改变验收的假设或用户决策 |
+| Data operation accounting | 清洗、归档或批量更新发现重复/异常/缺失数据 | 给出输入输出行数/对象数及分类总数，说明异常处理和留存路径，数目应可核对 | 不声称全量完成但不说明被剔除/无法处理项 |
+| Development evidence receipt | 开发汇报宣称构建、测试或审查通过 | 给命令、cwd、时间、exit code、关键输出、差异/报告路径及 hash；未运行项目明确标为未执行 | 不虚构运行结果，不以 worker 自报替代 Orca 权威查询 |
 | Released but unverified | Resources are released while a child quality gate is failed, unknown or incomplete | Report resource settlement separately from execution and quality status | No claim that release means task success |
 | Child result not Orca result | Internal child has a result but its Orca Task/Dispatch state is not reconciled | Keep execution and Orca status separate; query the authoritative state before completion | No promotion of parent self-report to authoritative completion |
 | High-risk placement | Task involves deletion, production configuration, safety/compliance, or external publication | Require isolated worktree and verified Manual permissions/equivalent; if current is requested, obtain explicit confirmation | No dispatch on assumed prompt-only safety |

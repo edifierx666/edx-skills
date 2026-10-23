@@ -20,7 +20,7 @@ review 代码、对照需求文档核查或“多个智能体 / 多模型 review
 
 ## 预检
 
-确定交付类型、验收、基线、数据策略与 provider/family。敏感度或外网策略未知时不得派发（命中 `references/multi-agent-review.md` 的本地只读 review 按该文件默认只读处理）。高风险/不可逆任务要求隔离 worktree 和已核实的 Manual permissions；worktree、Ownership 和提示词不是权限沙箱。先锁定唯一 Orca 可执行文件，加载 `orchestration` 指南执行；不要切可执行文件或把 handoff 与 supervised worker 混成重复启动。
+确定交付、验收、基线、数据策略和 provider/family。敏感度或外网策略未知时不得派发（本地只读 review 除外，按 `references/multi-agent-review.md` 默认处理）。高风险/不可逆任务须隔离 worktree 并核实 Manual permissions；worktree、Ownership 和提示词不是权限沙箱。锁定唯一 Orca 可执行文件并加载 `orchestration` 指南；不要切换可执行文件或重复启动 handoff 与 supervised worker。
 
 记录 repo/HEAD/SHA、`git status --porcelain=v1 -uall`、diff、untracked/目标文件 hash、Ownership 和 dispatch ceiling（极速模式默认 6）；非 Git 记录文件清单/hash。dirty/untracked 与目标 Ownership 重叠时停止询问，禁止 restore/reset/stash/clean。manifest/spec 放 `.orca-notes/runs/<run-id>/`；只在 Git 仓库时 `.orca-notes/` 加入该仓库 `.git/info/exclude`，不改共享 `.gitignore`。联网 researcher/fact-checker 用干净无密钥 worktree，否则由 coordinator 供脱敏副本。
 
@@ -82,7 +82,7 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
 
 ## 拆解与执行计划
 
-先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试、报告和渲染输出；每条可写路径唯一 owner；依赖表示真实先后，超过 4 层先解释原因。启动前确认角色、模型/family、Ownership、profile、dispatch ceiling 和验收。只读 review 命中 [`references/multi-agent-review.md`](references/multi-agent-review.md) 极速模式时直接派发，不先取得计划确认；其余只读 review 计划与数据策略确认后可派发 worker。写入、并行或高影响操作仍须相应授权。
+先确定完整 Ownership 闭包：产品、API/schema、迁移、配置、生成物、测试、报告和渲染产物；每条可写路径唯一 owner；依赖表示真实先后，超过 4 层先解释原因。启动前确认角色、模型/family、Ownership、profile、dispatch ceiling 和验收。只读 review 命中极速模式时直接派发；其余计划与数据策略确认后派发。写入、并行或高影响操作仍须相应授权。
 
 默认 `shared-serial`；普通文档的独立章节可选 `parallel-doc`（支持非 Git）；代码并行写入仅在用户明确授权后选 `parallel-worktree`。各模式的基线、Ownership、候选组装与冻结步骤只在 [`references/coordinator-protocol.md「三种并发 Profile」`](references/coordinator-protocol.md#三种并发-profile) 维护；派发时将所选模式全文附到相关 worker spec。
 
@@ -113,7 +113,7 @@ orca orchestration task-create --run <run_id> \
 
 一个 coordinator 负责一个 Run。收到 Delivery 后按 `runId + deliveryId + messageId` 去重：写 intent、执行副作用、保存回执/ID、标记 acted，再处理完整批次并 ack。响应丢失先 `request-show`；pending 仅以同 request ID 原样精确重放一次；absent 不是未执行证明。无法唯一对账时暂停 ack、dispatch、retry、release 与其他 mutation，不发新 request 猜测重做。本地 ledger 不保证 exactly-once。
 
-汇报前按 manifest 核对 worker/Task/Dispatch 和 child;必需 child 未完成、失败、阻塞、未知或缺证据时,首行写"未形成可信的整体完成结论",不得写成 PASS、SHIP 或完成。
+汇报前按 manifest 核对 worker/Task/Dispatch/child；所有结论都按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`交代把握度、假设、行动足迹、抽检凭证和盲区。必需 child 未完成、失败、阻塞、未知或缺证据时，首行写“未形成可信的整体完成结论”，不得写 PASS、SHIP 或完成。
 
 | 消息/事件 | 协调器动作 |
 | --- | --- |
@@ -131,7 +131,7 @@ orca orchestration task-create --run <run_id> \
 
 终审只能审最终冻结版本的完整 diff、tracked/untracked manifest、artifact hash。新文件逐项检查，不能只用 `git diff --stat`。未授权默认不提交；若用户授权，只 stage 基线干净且 manifest 归属明确的路径。未提交 worktree 不能靠 merge 转移；按 manifest 逐文件/patch 转移并核 hash，或另请用户授权提交。转移后重新验收。
 
-`worker-list` 用 `--run <run_id>` 显式 scope 并分页直到结束；处理 active/reclaimable/retained/release_pending/release_unknown/released 和每项 `nextAction`。用户/预存/复用资源不强制关闭；release unknown 走 recovery guide，不能用 `terminal close` 替代。删除 worktree、文件、分支，push、PR、发布/分享均须分别得到用户授权。细节见 `references/coordinator-protocol.md`。
+`worker-list --run <run_id>` 分页到底；coordinator 对自己启动的 worker 负责结算，按状态与 `nextAction` 处理。settled、归本 Dispatch 且不复用的 worker 按指南 release；保留写理由，动作凭回执。非归属资源不强关；release unknown 走 recovery，禁用 `terminal close` 代替。删除 worktree/文件/分支，push、PR、发布/分享均须授权。详见 `coordinator-protocol.md`。
 
 ## 校验
 

@@ -250,8 +250,37 @@ export function validateDocuments(files) {
     [protocol, '若账本和 Orca 状态无法对齐，整体状态不得为 `complete`', 'incomplete-aggregation'],
     [protocol, '根元素为 `<worker_spec>`', 'worker-spec-xml'],
     [protocol, '解析失败或残留占位符时不得派发', 'worker-spec-xml'],
+    [lifecycle, 'coordinator 的本地报告格式，不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', 'report-scope'],
+    [lifecycle, '交付结论与把握度', 'report-confidence'],
+    [lifecycle, '执行轨迹与行动足迹', 'report-trace'],
+    [lifecycle, '可抽检凭证', 'report-evidence'],
+    [lifecycle, '核心取舍与隐式假设', 'report-assumptions'],
+    [lifecycle, '盲区与待确认项', 'report-blind-spots'],
+    [lifecycle, '仅在所有必需 child 有可核验最终结果、关联 Orca 状态已对账且证据齐全时成立', 'report-complete-gate'],
+    [protocol, 'coordinator 对自己启动的 worker 负责盘点并处理资源结算', 'resource-owner'],
+    [protocol, '`projection.nextAction` 是建议而非执行证明', 'resource-action-evidence'],
+    [protocol, '保留资源必须逐项记录依据', 'resource-retain-reason'],
+    [protocol, '`released` 不代表任务通过，`retained` 不代表 worker 未完成，worker 完成也不代表终端已释放', 'resource-state-separation'],
+    [protocol, '`release_pending` / `release_unknown` 必须沿当前 recovery guide 按回执对账恢复，绝不用 `terminal close` 替代', 'resource-release-recovery'],
+    [files.get('SKILL.md') ?? '', '所有结论都按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`交代把握度、假设、行动足迹、抽检凭证和盲区', 'report-scope'],
+    [files.get('SKILL.md') ?? '', 'coordinator 对自己启动的 worker 负责结算', 'resource-owner'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Coordinator启动的worker由该coordinator负责盘点与结算', 'resource-owner'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'nextAction只是建议；未经回执/查询确认不能记为已释放', 'resource-action-evidence'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Coordinator reporting without evidence', 'report-scope'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Research/analysis confidence', 'report-confidence'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Content/creative assumptions', 'report-assumptions'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Data operation accounting', 'report-actions'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Development evidence receipt', 'report-evidence'],
   ];
   for (const [text, sentence, code] of fixedContracts) if (!text.includes(sentence)) fail(code, `固定契约缺失或被改写：${sentence}`);
+
+  for (const path of roleFiles) {
+    const text = files.get(path) ?? '';
+    const prompt = text.split('## 前置提示词')[1]?.match(/```xml\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? '';
+    if (['## Coordinator 用户可见汇报契约', '交付结论与把握度', '执行轨迹与行动足迹', '可抽检凭证', '核心取舍与隐式假设', '盲区与待确认项'].every(token => prompt.includes(token))) {
+      fail('role-report-isolation', `${path} 不应复制 coordinator 的整体汇报模板`);
+    }
+  }
 
   // 关键边界使用完整约束，避免单个关键词仍在、语义却已反转。
   const boundaryContracts = [
