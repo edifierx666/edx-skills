@@ -1,6 +1,6 @@
 # 统一 worker 生命周期与证据契约
 
-总指挥将本文件全文附在每个角色前置提示词后（需求审计官另附原文审计规范）；worker 不依赖相对路径可读性。
+总指挥将本文件全文放入 XML spec 的 `<lifecycle_contract>`（需求审计官另在 `<audit_spec>` 附原文审计规范），结构见 coordinator-protocol「Worker spec XML 结构」；worker 不依赖相对路径可读性。
 
 - 只用当前 Orca preamble 的可执行文件、handle、Task ID、Dispatch ID。自然检查点及完成前检查追加指示。`check` 返回 `consumer_fenced` 立即停止，不重试 check、不发送完成事件；send/ask 的同名错误先停止副作用并按 worker-contract 核实调用终端身份，禁止沿用过期身份。
 - `worker_done` 是一次逻辑完成事件；完成报告发送后停止 check、轮询和新工作。响应丢失不盲目重复发送：由 coordinator 先 request-show，再核对 Task/Dispatch；只有当前 recovery guide 允许时才用相同 request ID、相同命令精确恢复。没有 request 身份或结果不唯一就停止并升级，不能新建完成事件猜测补发。

@@ -41,7 +41,7 @@
 
 纯代码仓库且无 UI 范围时，第三个 worker 可改为 **测试覆盖与可验证性**审查（验收命令是否真的覆盖需求条目、是否只是存在而未断言）。需求文档本身就是被审对象时（PRD 审计），按 `roles/requirement-auditor.md` 派发，其余两个 worker 仍按上表分工。
 
-每个 spec 必须写明：被审范围（文件路径或文档章节）、需求文档路径与版本/hash、冻结输入 manifest、审查焦点、`VERDICT: SHIP | FIX-FIRST | BLOCKED` 输出格式、独占报告路径，并附 `references/worker-lifecycle.md` 与所选并发 Profile 全文。
+每个 spec 必须写明：被审范围（文件路径或文档章节）、需求文档路径与版本/hash、冻结输入 manifest、审查焦点、`VERDICT: SHIP | FIX-FIRST | BLOCKED` 输出格式、独占报告路径，并按 `references/coordinator-protocol.md「Worker spec XML 结构」`组装为 `<worker_spec>`，在 CDATA 中附 `references/worker-lifecycle.md` 与所选并发 Profile 全文。
 
 ## 家族约束
 

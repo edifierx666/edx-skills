@@ -16,6 +16,22 @@
 
 若 dirty/untracked 基线与计划 Ownership 重叠，不能可靠区分本次任务和用户已有改动。停止涉及路径的写入，请用户明确处理方式；不得自动 restore、reset、stash、clean 或覆盖。worktree 也不是权限沙箱。
 
+## Worker spec XML 结构
+
+发给 worker 的 spec 必须是单个 XML 文档，根元素为 `<worker_spec>`，用标签分隔指令与数据，避免 worker 把附件或被审内容当成指令：
+
+```xml
+<worker_spec run="{{run_id}}" task="{{task_id}}" revision="{{revision}}">
+  <role_prompt role="{{路由键}}">替换占位符后的角色前置提示词</role_prompt>
+  <scope>Ownership、被审范围、冻结输入 manifest/hash、authorFamilies</scope>
+  <acceptance>验收命令或检查清单、独占报告路径</acceptance>
+  <lifecycle_contract><![CDATA[references/worker-lifecycle.md 全文]]></lifecycle_contract>
+  <concurrency_profile><![CDATA[所选并发 Profile 全文]]></concurrency_profile>
+</worker_spec>
+```
+
+角色模板中的 `{{...}}` 占位符必须全部替换；派发前用 `xmllint --noout` 或等效解析器校验整份 spec，解析失败或残留占位符时不得派发。原文附件（worker-lifecycle、并发 Profile、需求审计规范、需求文档摘录、diff 等）放入 CDATA；附件含 `]]>` 时拆分为相邻 CDATA 段，不得改写正文。XML 标签只是结构约定，不是权限沙箱，也不新增 Orca API 字段。
+
 ## 三种并发 Profile
 
 - `shared-serial`：默认。共享目录同时最多一个写入 worker；实现完成后先冻结产品内容，仅 tester 串行写测试并运行，tester 完成后冻结完整候选再审查。测试和构建若会产生文件，必须指定独立输出目录，或在冻结产品内容后串行执行。

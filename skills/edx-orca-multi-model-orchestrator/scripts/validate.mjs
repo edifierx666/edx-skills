@@ -95,7 +95,23 @@ export function validateDocuments(files) {
   for (const path of roleFiles) {
     if (indexedRoles.filter(role => role.path === path).length !== 1) fail('unindexed-role', path);
     const text = files.get(path);
-    const preamble = text.split('## 前置提示词')[1]?.split('```')[1] ?? '';
+    const preambleBlock = text.split('## 前置提示词')[1]?.match(/```xml\r?\n([\s\S]*?)\r?\n```/)?.[1];
+    const preamble = preambleBlock ?? '';
+    // 前置提示词以 XML 发给 worker：必须有根元素、核心分节，且占位符不能用会破坏解析的尖括号。
+    if (!preambleBlock) fail('role-prompt-xml', `${path} 前置提示词必须是 xml 代码块`);
+    else {
+      const root = preamble.match(/^<role_prompt role="([a-z0-9-]+)"[^>]*>[\s\S]*<\/role_prompt>$/);
+      if (!root) fail('role-prompt-xml', `${path} 前置提示词必须以 <role_prompt role="..."> 为唯一根元素`);
+      else if (`roles/${root[1]}.md` !== path) fail('role-prompt-xml', `${path} 的 role 属性与文件名不一致`);
+      for (const tag of ['identity', 'permissions', 'task', 'lifecycle']) {
+        if (!new RegExp(`<${tag}(?:\\s[^>]*)?>[^<]+</${tag}>`).test(preamble)) fail('role-prompt-xml', `${path} 缺少 <${tag}> 分节`);
+      }
+      const opened = [...preamble.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map(match => match[1]).sort();
+      const closed = [...preamble.matchAll(/<\/([a-z_]+)>/g)].map(match => match[1]).sort();
+      if (opened.join() !== closed.join()) fail('role-prompt-xml', `${path} XML 标签未配对`);
+      const stray = preamble.replace(/<\/?[a-z_]+(?:\s[a-z_]+="[^"<>]*")*\s*>/g, '');
+      if (/[<>&]/.test(stray)) fail('role-prompt-xml', `${path} 正文含未转义的 <、> 或 &，占位符请用 {{...}}`);
+    }
     for (const token of ['references/worker-lifecycle.md', 'consumer_fenced', 'worker_done 后停止', '未知回执先对账', 'succeeded 不等于质量 PASS', 'report-file Ownership']) {
       if (!preamble.includes(token)) fail('role-lifecycle', `${path} 缺 ${token}`);
     }
@@ -232,6 +248,8 @@ export function validateDocuments(files) {
     [protocol, '必须按 manifest 逐项核对每个必需 child', 'child-accounting'],
     [protocol, '未形成可信的整体完成结论', 'partial-reporting'],
     [protocol, '若账本和 Orca 状态无法对齐，整体状态不得为 `complete`', 'incomplete-aggregation'],
+    [protocol, '根元素为 `<worker_spec>`', 'worker-spec-xml'],
+    [protocol, '解析失败或残留占位符时不得派发', 'worker-spec-xml'],
   ];
   for (const [text, sentence, code] of fixedContracts) if (!text.includes(sentence)) fail(code, `固定契约缺失或被改写：${sentence}`);
 

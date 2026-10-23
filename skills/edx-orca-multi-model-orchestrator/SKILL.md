@@ -98,10 +98,10 @@ curl --fail --silent --show-error "$MAGPIE_BASE_URL/v1/models" \
 
 ## Orca orchestration Run/Task 编排
 
-本 Skill 默认进入 supervised loop。先 `run-create` 得到 Run ID；Run 不会创建 worker。每个角色 spec 必须独立、自包含。不要将 spec 直接嵌入命令源码、使用 `eval` 或 shell xtrace；先写入 `.orca-notes/runs/<run_id>/specs/<task>.md`，记录 SHA-256 和输入 revision，再用当前 CLI 支持的 `--spec <text>` 以一个 quoted 参数传入：
+本 Skill 默认进入 supervised loop。先 `run-create` 得到 Run ID。spec 须独立、自包含。不要将 spec 直接嵌入命令源码、使用 `eval` 或 shell xtrace；先写入 XML spec `.orca-notes/runs/<run_id>/specs/<task>.xml`（结构见 coordinator-protocol），记录 SHA-256 和输入 revision，再用当前 CLI 支持的 `--spec <text>` 以一个 quoted 参数传入：
 
 ```sh
-spec_file='.orca-notes/runs/<run_id>/specs/<task>.md'
+spec_file='.orca-notes/runs/<run_id>/specs/<task>.xml'
 shasum -a 256 "$spec_file"  # 原 spec 文件 hash
 orca orchestration task-create --run <run_id> \
   --spec "$(cat "$spec_file")" --task-title "<title>" --json

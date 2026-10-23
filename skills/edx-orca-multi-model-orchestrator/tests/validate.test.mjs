@@ -194,6 +194,12 @@ test('复用终端禁止 effort', () => reject(withWorkerCommand('orca orchestra
 test('复用终端须精确 worktree', () => reject(withWorkerCommand('orca orchestration worker-start --run run-1 --task task-1 --worktree current --terminal handle --json'), 'terminal-placement'));
 test('retry 缺 task', () => reject(withWorkerCommand('orca orchestration worker-start --run run-1 --retry-of dispatch-1 --worktree current --agent claude --model model-id --effort max'), 'retry-required'));
 test('retry 不允许 spec 替代 task', () => reject(withWorkerCommand('orca orchestration worker-start --run run-1 --spec "x" --retry-of dispatch-1 --worktree current --agent claude --model model-id --effort max'), 'retry-required'));
+test('角色前置提示词退回纯文本代码块时拒绝', () => reject(mutate(original, 'roles/reviewer.md', '```xml\n<role_prompt', '```\n<role_prompt'), 'role-prompt-xml'));
+test('角色前置提示词缺少根元素时拒绝', () => reject(mutate(original, 'roles/writer.md', '<role_prompt role="writer" name="撰稿人">', '<prompt>'), 'role-prompt-xml'));
+test('角色 role 属性与文件名不一致时拒绝', () => reject(mutate(original, 'roles/coder.md', '<role_prompt role="coder"', '<role_prompt role="tester"'), 'role-prompt-xml'));
+test('角色前置提示词缺少核心分节时拒绝', () => reject(mutate(original, 'roles/planner.md', '<permissions>', '<scope>'), 'role-prompt-xml'));
+test('角色占位符使用尖括号破坏 XML 时拒绝', () => reject(mutate(original, 'roles/researcher.md', '{{摘要路径}}', '<摘要路径>'), 'role-prompt-xml'));
+test('角色前置提示词含未转义 & 时拒绝', () => reject(mutate(original, 'roles/editor.md', '让中文表达更流畅', '让中文表达更流畅 & 统一'), 'role-prompt-xml'));
 test('生命周期缺 fenced 处理', () => reject(mutate(original, 'roles/writer.md', 'consumer_fenced', 'unknown_state'), 'role-lifecycle'));
 test('完成与质量门缺失', () => {
   const files = clone(original);
@@ -277,6 +283,8 @@ const boundaryMutations = [
   ['临近额度先停派', 'references/recovery.md', '停止新派发，列出剩余工作并询问是否增加额度', '继续派发直到额度耗尽', 'dispatch-budget'],
   ['修复按关卡与范围计数', 'references/coordinator-protocol.md', '每个 `gate × review scope` 的修复轮次分别计数，最多 2 轮', '允许无限修复', 'repair-budget'],
   ['Child 状态聚合门', 'references/coordinator-protocol.md', '全部必需 child 有可核验最终结果、每个关联 Orca 状态已对账且证据齐全时才可为 `complete`', '只要父 worker 有摘要就可为 `complete`', 'incomplete-aggregation'],
+  ['Worker spec 使用 XML 根元素', 'references/coordinator-protocol.md', '根元素为 `<worker_spec>`', '格式不限', 'worker-spec-xml'],
+  ['Worker spec XML 解析失败不得派发', 'references/coordinator-protocol.md', '解析失败或残留占位符时不得派发', '解析失败时仍可派发', 'worker-spec-xml'],
   ['部分状态汇报字段', 'references/coordinator-protocol.md', '计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据', '只汇报一个整体状态', 'partial-reporting'],
   ['PPT 后置事实门', 'references/coordinator-protocol.md', 'PPT worker 完成并冻结产物后，coordinator 必须再派 fact-checker 核对幻灯片文本、图表标签和数据', 'PPT 视觉自查后直接交付', 'ppt-facts'],
   ['PRD 结论枚举', 'roles/requirement-auditor.md', '- `--body` 第一行写 `VERDICT: SHIP`', '- `--body` 第一行写 `VERDICT: PASS`', 'prd-verdict'],
