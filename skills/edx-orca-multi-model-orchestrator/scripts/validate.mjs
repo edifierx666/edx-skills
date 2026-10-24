@@ -250,12 +250,25 @@ export function validateDocuments(files) {
     [protocol, '若账本和 Orca 状态无法对齐，整体状态不得为 `complete`', 'incomplete-aggregation'],
     [protocol, '根元素为 `<worker_spec>`', 'worker-spec-xml'],
     [protocol, '解析失败或残留占位符时不得派发', 'worker-spec-xml'],
-    [lifecycle, 'coordinator 的本地报告格式，不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', 'report-scope'],
-    [lifecycle, '交付结论与把握度', 'report-confidence'],
-    [lifecycle, '执行轨迹与行动足迹', 'report-trace'],
-    [lifecycle, '可抽检凭证', 'report-evidence'],
-    [lifecycle, '核心取舍与隐式假设', 'report-assumptions'],
-    [lifecycle, '盲区与待确认项', 'report-blind-spots'],
+    [lifecycle, '不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', 'report-scope'],
+    [lifecycle, '**调度全景**', 'report-overview'],
+    [lifecycle, '**逐 worker 施工明细**', 'report-per-worker'],
+    [lifecycle, '`[原因] ➔ [擅自做的决定] ➔ [怎么改回来/推翻成本]`', 'report-deviation'],
+    [lifecycle, '**防坑自检**', 'report-sanity-check'],
+    [lifecycle, '**🕳️ 逻辑缺口与未覆盖盲区**', 'report-logic-gaps'],
+    [lifecycle, '[异常与逆向流缺失] / [原需求逻辑漏洞] / [上下游连锁断层]', 'report-logic-gaps'],
+    [lifecycle, '不得只写“已完成”', 'report-logic-gaps'],
+    [lifecycle, '是否只验证了主流程', 'report-happy-path'],
+    [lifecycle, '不能只报跑通的主流程（Happy Path）', 'worker-logic-gaps'],
+    [lifecycle, '不得装作没看见硬写', 'worker-logic-gaps'],
+    [protocol, '逻辑缺口（异常与逆向流缺失、原需求逻辑漏洞、上下游连锁断层）', 'child-transparent-report'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Happy path only', 'report-happy-path'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Requirement logic hole', 'worker-logic-gaps'],
+    [files.get('references/acceptance-scenarios.md') ?? '', 'Downstream ripple', 'report-logic-gaps'],
+    [lifecycle, '**待你拍板与补漏建议**', 'report-sign-off'],
+    [lifecycle, '**写给用户的是任务事实，不是编排运维。**', 'report-no-ops-noise'],
+    [lifecycle, '没有内容的项整项省略', 'report-omit-empty'],
+    [lifecycle, '流程图只画任务本身的数据/工作流，不画 Orca 调度', 'report-no-ops-noise'],
     [lifecycle, '仅在所有必需 child 有可核验最终结果、关联 Orca 状态已对账且证据齐全时成立', 'report-complete-gate'],
     [lifecycle, '动作与决策偏离', 'worker-autonomy-report'],
     [lifecycle, '原因 → 决定 → 影响与回退方式/位置', 'worker-autonomy-report'],
@@ -279,7 +292,7 @@ export function validateDocuments(files) {
     [protocol, '保留资源必须逐项记录依据', 'resource-retain-reason'],
     [protocol, '`released` 不代表任务通过，`retained` 不代表 worker 未完成，worker 完成也不代表终端已释放', 'resource-state-separation'],
     [protocol, '`release_pending` / `release_unknown` 必须沿当前 recovery guide 按回执对账恢复，绝不用 `terminal close` 替代', 'resource-release-recovery'],
-    [files.get('SKILL.md') ?? '', '所有结论都按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`交代把握度、假设、行动足迹、抽检凭证和盲区', 'report-scope'],
+    [files.get('SKILL.md') ?? '', '汇报按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`四段式写任务事实', 'report-scope'],
     [files.get('SKILL.md') ?? '', 'coordinator 对自己启动的 worker 负责结算', 'resource-owner'],
     [files.get('references/acceptance-scenarios.md') ?? '', 'Coordinator启动的worker由该coordinator负责盘点与结算', 'resource-owner'],
     [files.get('references/acceptance-scenarios.md') ?? '', 'nextAction只是建议；未经回执/查询确认不能记为已释放', 'resource-action-evidence'],
@@ -294,7 +307,7 @@ export function validateDocuments(files) {
   for (const path of roleFiles) {
     const text = files.get(path) ?? '';
     const prompt = text.split('## 前置提示词')[1]?.match(/```xml\r?\n([\s\S]*?)\r?\n```/)?.[1] ?? '';
-    if (['## Coordinator 用户可见汇报契约', '交付结论与把握度', '执行轨迹与行动足迹', '可抽检凭证', '核心取舍与隐式假设', '盲区与待确认项'].every(token => prompt.includes(token))) {
+    if (['## Coordinator 用户可见汇报契约', '**调度全景**', '**逐 worker 施工明细**', '**防坑自检**', '**待你拍板与补漏建议**'].every(token => prompt.includes(token))) {
       fail('role-report-isolation', `${path} 不应复制 coordinator 的整体汇报模板`);
     }
   }

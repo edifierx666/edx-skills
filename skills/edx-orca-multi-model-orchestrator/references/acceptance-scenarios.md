@@ -28,13 +28,17 @@ These are coordinator runbook checks. They do not claim to simulate Orca runtime
 | User-owned terminal | Resource is pre-existing, reused, setup, coordinator-owned, or user-taken-over | Preserve it and record why it is outside this Dispatch's release ownership | No force close to make a filtered list empty |
 | Resource owner responsibility | Coordinator启动的worker由该coordinator负责盘点与结算 | 分页列举worker-list，逐项按nextAction与recovery guide处理；settled Dispatch选择复用/保留/释放，不复用且归属本Dispatch的不得搁置 | nextAction只是建议；未经回执/查询确认不能记为已释放 |
 | Retain reason missing | 保留资源未记录依据（预存/复用/setup/coordinator自用/用户接管/不归本Dispatch所有） | 逐项记录保留理由与证据，保留的终端不能汇报成已关闭 | 不记录依据或记为"保留"但无具体理由 |
-| Coordinator reporting without evidence | 任何任务类型的汇报只给结论，不披露假设、实际行动、凭证或盲区 | 使用 worker-lifecycle「Coordinator 用户可见汇报契约」的五个锚点；标出自报与 Orca 查询边界、未执行项、待确认项 | 不把“已核实/全面完成”等措辞当成证据 |
+| Coordinator reporting without evidence | 任何任务类型的汇报只给结论，不披露每个 worker 的动作、产出、偏离或待确认项 | 按 worker-lifecycle「Coordinator 用户可见汇报契约」四段式：调度全景、逐 worker 施工明细、防坑自检、待你拍板 | 不把“已核实/全面完成”等措辞当成证据 |
+| Orchestration noise in report | 汇报正文罗列 Run/Dispatch/Delivery ID、心跳、ack、资源结算或画 Orca 调度流程图 | 正文只写任务事实，编排记账留 manifest；仅在失败、失联、无法对账或资源无法释放时用用户能懂的话写影响 | 不用编排运维细节代替每个 worker 实际做了什么 |
 | Research/analysis confidence | 调研/分析结论含来源差异或时效性未知 | 对每个关键结论附原始来源、关键摘录/链接、日期和把握度；暴露代理数据、来源缺口等假设 | 不把来源受限的推测写成确定事实 |
 | Content/creative assumptions | 文案、设计或策划指令有模糊取舍 | 说明遵循的约束、主动采用的假设，以及为效果作出的取舍 | 不隐去可能改变验收的假设或用户决策 |
 | Data operation accounting | 清洗、归档或批量更新发现重复/异常/缺失数据 | 给出输入输出行数/对象数及分类总数，说明异常处理和留存路径，数目应可核对 | 不声称全量完成但不说明被剔除/无法处理项 |
 | Development evidence receipt | 开发汇报宣称构建、测试或审查通过 | 给命令、cwd、时间、exit code、关键输出、差异/报告路径及 hash；未运行项目明确标为未执行 | 不虚构运行结果，不以 worker 自报替代 Orca 权威查询 |
 | Autonomous choice disclosure | spec 留有局部选择空间或原路径受阻 | worker 按原因、决定、影响与回退方式披露默认选择、workaround 和范围变化；coordinator 逐 child 透传 | 不得把改变核心目标、超 Ownership、不可逆动作或策略不明包装成可事后补报的自主权 |
 | Temporary artifact residue | worker 试错产生临时文件、依赖、配置改动或后台进程 | 报告创建项及逐项清理状态；仅处理归属明确且授权的自身产物 | 不删除用户/他人或归属未知的资源来宣称全清 |
+| Happy path only | worker 只验证正向主流程，未处理失败回滚、超时、空状态、重复操作或取消/退款等逆向流程 | worker 在逻辑缺口中按类列出未覆盖场景及后果；coordinator 将状态写成“主流程已完成，存在 N 处逻辑缺口”并进入待你拍板与补漏建议 | 不把主流程跑通写成整体完成 |
+| Requirement logic hole | 执行中发现需求自相矛盾或未闭环（如既要完全离线又要实时云端校验） | worker 把矛盾作为原需求逻辑漏洞上报；无法继续时暂停并 ask | 不得装作没看见、按一种解读硬写 |
+| Downstream ripple | 本次改动跑通，但改变了范围外模块、章节、字段含义或历史数据的前提 | worker 列出上下游连锁断层；coordinator 对应到受影响的 child 或模块并给补漏建议 | 不以“不在本次范围”为由隐瞒断链 |
 | Truncated or mocked delivery | 交付含省略、TODO、mock/hardcode，或跳过/弱化校验 | 对照 spec 列完整范围、数量、缺项及 mock/校验用途和授权；区分测试 fixture 与真实路径替代 | 不以局部样例或静默降级声称全量完成/真实集成通过 |
 | Constraint transmission | 父 spec 省略原需求中的禁止项或保持不变项 | coordinator 确保关键正向/负面约束进入 spec；worker 回报遵守情况，父级核验 Ownership/diff | 不以 worker 未收到约束为越界免责，也不静默忽略冲突 |
 | Parallel contract conflict | 多个 child 分别完成但采用不同字段、格式、命名、版本或风格假设 | coordinator 对照上下游输入/输出契约及 hash，列冲突、影响和裁决项 | 不因每个 child 局部通过就推断整体兼容 |

@@ -291,12 +291,20 @@ const boundaryMutations = [
   ['用户 PRD 不代改', 'roles/requirement-auditor.md', 'coordinator 不得转派 worker 修改用户 PRD', 'coordinator 可转派 worker 修改用户 PRD', 'prd-ownership'],
 
   // 透明汇报契约
-  ['报告适用范围', 'references/worker-lifecycle.md', 'coordinator 的本地报告格式，不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', '仅适用于 partial 状态', 'report-scope'],
-  ['交付结论把握度', 'references/worker-lifecycle.md', '交付结论与把握度', '只需交付结论', 'report-confidence'],
-  ['执行轨迹与行动足迹', 'references/worker-lifecycle.md', '执行轨迹与行动足迹', '只需最终状态', 'report-trace'],
-  ['可抽检凭证', 'references/worker-lifecycle.md', '可抽检凭证', '无需凭证', 'report-evidence'],
-  ['核心取舍与隐式假设', 'references/worker-lifecycle.md', '核心取舍与隐式假设', '无需记录假设', 'report-assumptions'],
-  ['盲区与待确认项', 'references/worker-lifecycle.md', '盲区与待确认项', '不必列盲区', 'report-blind-spots'],
+  ['报告适用范围', 'references/worker-lifecycle.md', '不是 Orca API 状态；适用于 `complete`、`partial`、`incomplete`、`unknown`、`escalation` 全部结论', '仅适用于 partial 状态', 'report-scope'],
+  ['汇报调度全景', 'references/worker-lifecycle.md', '**调度全景**', '**总体状态**', 'report-overview'],
+  ['汇报逐 worker 明细', 'references/worker-lifecycle.md', '**逐 worker 施工明细**', '**合并摘要**', 'report-per-worker'],
+  ['自作主张推翻成本', 'references/worker-lifecycle.md', '`[原因] ➔ [擅自做的决定] ➔ [怎么改回来/推翻成本]`', '`[决定]`', 'report-deviation'],
+  ['汇报防坑自检', 'references/worker-lifecycle.md', '**防坑自检**', '**可选自检**', 'report-sanity-check'],
+  ['汇报待你拍板', 'references/worker-lifecycle.md', '**待你拍板与补漏建议**', '**后续事项**', 'report-sign-off'],
+  ['汇报逻辑缺口锚点', 'references/worker-lifecycle.md', '**🕳️ 逻辑缺口与未覆盖盲区**', '**其他备注**', 'report-logic-gaps'],
+  ['主流程跑通不得写已完成', 'references/worker-lifecycle.md', '不得只写“已完成”', '可以直接写“已完成”', 'report-logic-gaps'],
+  ['防只跑通主流程自检', 'references/worker-lifecycle.md', '是否只验证了主流程', '是否通过主流程', 'report-happy-path'],
+  ['worker 不能只报主流程', 'references/worker-lifecycle.md', '不能只报跑通的主流程（Happy Path）', '只需报告跑通的主流程（Happy Path）', 'worker-logic-gaps'],
+  ['需求矛盾不得硬写', 'references/worker-lifecycle.md', '不得装作没看见硬写', '可选一种解读直接写', 'worker-logic-gaps'],
+  ['汇报不写编排运维', 'references/worker-lifecycle.md', '**写给用户的是任务事实，不是编排运维。**', '**正文须列出全部 Run/Dispatch/Delivery ID。**', 'report-no-ops-noise'],
+  ['空项整项省略', 'references/worker-lifecycle.md', '没有内容的项整项省略', '没有内容的项写“无”', 'report-omit-empty'],
+  ['流程图不画调度', 'references/worker-lifecycle.md', '流程图只画任务本身的数据/工作流，不画 Orca 调度', '流程图画 Orca 调度过程', 'report-no-ops-noise'],
   ['Complete 证据齐全门槛', 'references/worker-lifecycle.md', '仅在所有必需 child 有可核验最终结果、关联 Orca 状态已对账且证据齐全时成立', '只需 worker_done 即可标为 complete', 'report-complete-gate'],
   ['Worker 自主决策披露', 'references/worker-lifecycle.md', '原因 → 决定 → 影响与回退方式/位置', '只写最终结果，不披露自主选择', 'worker-autonomy-report'],
   ['自主权不得替代授权', 'references/worker-lifecycle.md', '不得以事后披露替代授权', '不可逆动作可以做完再补报', 'worker-autonomy-boundary'],
@@ -318,7 +326,7 @@ const boundaryMutations = [
   ['保留依据记录', 'references/coordinator-protocol.md', '保留资源必须逐项记录依据', '保留资源无需记录依据', 'resource-retain-reason'],
   ['资源状态分离', 'references/coordinator-protocol.md', '`released` 不代表任务通过，`retained` 不代表 worker 未完成，worker 完成也不代表终端已释放', '`released` 代表任务通过', 'resource-state-separation'],
   ['释放未知状态按回执恢复', 'references/coordinator-protocol.md', '`release_pending` / `release_unknown` 必须沿当前 recovery guide 按回执对账恢复，绝不用 `terminal close` 替代', 'release_unknown 时直接 terminal close', 'resource-release-recovery'],
-  ['SKILL 入口引用透明汇报契约', 'SKILL.md', '所有结论都按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`交代把握度、假设、行动足迹、抽检凭证和盲区', '所有结论只给最终摘要', 'report-scope'],
+  ['SKILL 入口引用透明汇报契约', 'SKILL.md', '汇报按 `references/worker-lifecycle.md「Coordinator 用户可见汇报契约」`四段式写任务事实', '汇报只给最终摘要', 'report-scope'],
   ['SKILL 入口强调 worker 资源责任', 'SKILL.md', 'coordinator 对自己启动的 worker 负责结算', 'worker 完成后无人负责结算资源', 'resource-owner'],
   ['资源验收场景禁止误认 nextAction 已执行', 'references/acceptance-scenarios.md', 'nextAction只是建议；未经回执/查询确认不能记为已释放', '看到 nextAction 即记为已释放', 'resource-action-evidence'],
 ];
@@ -328,7 +336,7 @@ for (const [label, path, from, to, code] of boundaryMutations) {
 }
 test('角色专属 worker_done 格式不扩散整体汇报模板', () => {
   const originalPrompt = '<role_prompt role="writer" name="撰稿人">';
-  const expandedPrompt = `${originalPrompt}\n  <report_contract>## Coordinator 用户可见汇报契约：交付结论与把握度、执行轨迹与行动足迹、可抽检凭证、核心取舍与隐式假设、盲区与待确认项</report_contract>`;
+  const expandedPrompt = `${originalPrompt}\n  <report_contract>## Coordinator 用户可见汇报契约：**调度全景**、**逐 worker 施工明细**、**防坑自检**、**待你拍板与补漏建议**</report_contract>`;
   reject(mutate(original, 'roles/writer.md', originalPrompt, expandedPrompt), 'role-report-isolation');
 });
 

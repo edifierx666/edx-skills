@@ -67,9 +67,9 @@ mutation 响应丢失时先调用 `request-show`。`completed` 读取原回执�
 
 父 coordinator 在任何整体汇报、最终整合或质量门结论前，必须按 manifest 逐项核对每个必需 child、关联的 Task/Dispatch/attempt 和父 worker 报告；不能只统计收到的 `worker_done` 数量，也不能把父 worker 的一句摘要当作 child 完成证据。每一项至少保留内部 child 状态、Orca 原始回执/查询结果、报告或结果路径、输入/输出 hash、错误/恢复事件和最近可读证据。
 
-面向用户汇总时，按 child 分别透传职责、关键动作/产物、worker 自报的自主偏离（含原因、影响和回退方式）、完整性/mock/校验声明、临时产物清理状态、关键红线及信源性质；明确标出哪些由 coordinator 独立核验、哪些仅为 worker 自报或仍未知。无偏离/无残留可简写为明确的“无”，不得吞掉未核实项。清理声明不能替代 manifest/status 核查，也不得为得到“全清”而删除归属不明或用户/他人资源。
+面向用户汇总时，按 child 分别透传职责、关键动作/产物、worker 自报的自主偏离（含原因、影响和回退方式）、逻辑缺口（异常与逆向流缺失、原需求逻辑漏洞、上下游连锁断层）、完整性/mock/校验声明、临时产物清理状态、关键红线及信源性质；明确标出哪些由 coordinator 独立核验、哪些仅为 worker 自报或仍未知。无偏离/无残留的项在用户汇报中直接省略，但未核实项不得省略。清理声明不能替代 manifest/status 核查，也不得为得到“全清”而删除归属不明或用户/他人资源。
 
-并行或串行交接时，coordinator 对照各 child 的产出与下游 spec，核验接口字段/格式、命名、版本/hash、核心假设和风格约束是否一致；记录冲突、受影响的下游和需用户裁决项。不得用各自局部通过推导整体契约一致；未对齐时暂停受影响的下游门或明确报告阻塞。
+并行或串行交接时，coordinator 对照各 child 的产出与下游 spec，核验接口字段/格式、命名、版本/hash、核心假设和风格约束是否一致；记录冲突、受影响的下游和需用户裁决项。某个 child 报告的上下游连锁断层若落在另一个 child 或范围外模块，coordinator 负责在汇报中把两端对应起来。不得用各自局部通过推导整体契约一致；未对齐时暂停受影响的下游门或明确报告阻塞。
 
 Orca 的 Task/Dispatch 状态始终以当前版本回执和查询为准，不在本协议中假设完整终态枚举。coordinator 可以做不冒充 Orca 字段的本地归类：`not_started | nonterminal | terminal_succeeded | terminal_failed | terminal_other | unknown`。内部 child 则单独使用 `not_started | running | completed | failed | blocked | unknown`；工具调用失败事件不替代任一层的状态查询。
 
