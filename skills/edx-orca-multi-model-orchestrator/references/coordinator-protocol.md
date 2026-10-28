@@ -67,7 +67,7 @@ mutation 响应丢失时先调用 `request-show`。`completed` 读取原回执�
 
 父 coordinator 在任何整体汇报、最终整合或质量门结论前，必须按 manifest 逐项核对每个必需 child、关联的 Task/Dispatch/attempt 和父 worker 报告；不能只统计收到的 `worker_done` 数量，也不能把父 worker 的一句摘要当作 child 完成证据。每一项至少保留内部 child 状态、Orca 原始回执/查询结果、报告或结果路径、输入/输出 hash、错误/恢复事件和最近可读证据。
 
-面向用户汇总时，按 child 分别透传职责、关键动作/产物、worker 自报的自主偏离（含原因、影响和回退方式）、逻辑缺口（异常与逆向流缺失、原需求逻辑漏洞、上下游连锁断层）、完整性/mock/校验声明、临时产物清理状态、关键红线及信源性质；明确标出哪些由 coordinator 独立核验、哪些仅为 worker 自报或仍未知。无偏离/无残留的项在用户汇报中直接省略，但未核实项不得省略。清理声明不能替代 manifest/status 核查，也不得为得到“全清”而删除归属不明或用户/他人资源。
+面向用户汇总时，按 child 分别透传职责、关键动作/产物、worker 自报的自主偏离（含原因、影响和回退方式）、逻辑缺口（异常与逆向流缺失、原需求逻辑漏洞、上下游连锁断层）、完整性/mock/校验声明、临时产物清理状态、关键红线及信源性质；明确标出哪些由 coordinator 独立核验、哪些仅为 worker 自报或仍未知（正文用【已核验】/【worker 自报】标记）。coordinator 自己做的换模型、改分工、缩放范围等决定单独列入“待你拍板”，不记到 worker 名下。无偏离/无残留的项在用户汇报中直接省略，但未核实项不得省略。清理声明不能替代 manifest/status 核查，也不得为得到“全清”而删除归属不明或用户/他人资源。
 
 并行或串行交接时，coordinator 对照各 child 的产出与下游 spec，核验接口字段/格式、命名、版本/hash、核心假设和风格约束是否一致；记录冲突、受影响的下游和需用户裁决项。某个 child 报告的上下游连锁断层若落在另一个 child 或范围外模块，coordinator 负责在汇报中把两端对应起来。不得用各自局部通过推导整体契约一致；未对齐时暂停受影响的下游门或明确报告阻塞。
 
@@ -77,7 +77,7 @@ Orca 的 Task/Dispatch 状态始终以当前版本回执和查询为准，不在
 
 执行结案、质量门和资源结算是三条独立状态轴：`execution_status` 表示是否完成并提交产物；`verification_status`、`review_verdict`、`fact_status` 表示测试/审查/事实门；`worker-list` 的 `active`、`reclaimable`、`retained`、`release_pending`、`release_unknown`、`released` 只表示资源处置。`released` 不代表任务通过，`retained` 不代表 worker 完成，资源已结算也不代表质量门通过。
 
-当状态为 `partial`、`incomplete` 或 `unknown` 时，用户可见汇报第一行必须写明“未形成可信的整体完成结论”，并至少包含：计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据；每个内部 child 的状态、错误/恢复摘要、结果或缺失证据；`execution_status`、`verification_status`、`review_verdict`、`fact_status`；未完成项、原因和下一步。已完成 child 的结果可以单独展示，但不得写成整体 PASS、SHIP 或完成。
+当状态为 `partial`、`incomplete` 或 `unknown` 时，用户可见汇报第一行必须写明“未形成可信的整体完成结论”，正文用大白话写清哪些 worker 没完成、原因、对结论的影响和下一步。manifest/ledger 中至少记录：计划任务总数及各状态计数；每个 Task/Dispatch 的 ID、原始状态和查询/回执依据；每个内部 child 的状态、错误/恢复摘要、结果或缺失证据；`execution_status`、`verification_status`、`review_verdict`、`fact_status`；未完成项、原因和下一步。这些 ID 与状态字段只在直接影响用户决策时进入正文，否则正文给一句 manifest 路径。已完成 child 的结果可以单独展示，但不得写成整体 PASS、SHIP 或完成。
 
 ## 完成状态与质量门
 

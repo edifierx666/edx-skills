@@ -37,6 +37,10 @@ These are coordinator runbook checks. They do not claim to simulate Orca runtime
 | Autonomous choice disclosure | spec 留有局部选择空间或原路径受阻 | worker 按原因、决定、影响与回退方式披露默认选择、workaround 和范围变化；coordinator 逐 child 透传 | 不得把改变核心目标、超 Ownership、不可逆动作或策略不明包装成可事后补报的自主权 |
 | Temporary artifact residue | worker 试错产生临时文件、依赖、配置改动或后台进程 | 报告创建项及逐项清理状态；仅处理归属明确且授权的自身产物 | 不删除用户/他人或归属未知的资源来宣称全清 |
 | Happy path only | worker 只验证正向主流程，未处理失败回滚、超时、空状态、重复操作或取消/退款等逆向流程 | worker 在逻辑缺口中按类列出未覆盖场景及后果；coordinator 将状态写成“主流程已完成，存在 N 处逻辑缺口”并进入待你拍板与补漏建议 | 不把主流程跑通写成整体完成 |
+| Off-target summary | 用户问“漏了哪些/能换成什么”，coordinator 交的是分阶段改造路线图或按 worker 分开的重复发现 | 首行结论直接回答原问题；主交付物为去重清单（位置、现状、建议、严重度、发现者、核验标记）；路线图只在待你拍板里概括并标超出本次范围 | 不用范围外建议替代主交付物 |
+| Unsourced metric | 汇报写“覆盖率 75%”“100% 共识”“0 处先验”“零成本”等数字但说不出口径 | 每个数字附分子/分母、命令或报告位置；说不出就删掉；把握度附一句依据 | 不用漂亮数字冒充证据 |
+| Coordinator decision hidden | coordinator 因模型报错换模型、改分工或缩范围，却写成某个 worker 的偏离或一笔带过 | 该决定列入待你拍板请用户追认；报告文件名与模型名前后一致 | 不把 coordinator 决定伪装成 worker 自主偏离 |
+| Report noise | 正文出现 Insight 块、Run ID、完整模型 ID、终端释放，或工具/插件附带的 token 节省与提交建议 | 正文只写任务事实，编排细节留 manifest，过滤工具推广尾注 | 不把编排记账和推广文字当成汇报内容 |
 | Requirement logic hole | 执行中发现需求自相矛盾或未闭环（如既要完全离线又要实时云端校验） | worker 把矛盾作为原需求逻辑漏洞上报；无法继续时暂停并 ask | 不得装作没看见、按一种解读硬写 |
 | Downstream ripple | 本次改动跑通，但改变了范围外模块、章节、字段含义或历史数据的前提 | worker 列出上下游连锁断层；coordinator 对应到受影响的 child 或模块并给补漏建议 | 不以“不在本次范围”为由隐瞒断链 |
 | Truncated or mocked delivery | 交付含省略、TODO、mock/hardcode，或跳过/弱化校验 | 对照 spec 列完整范围、数量、缺项及 mock/校验用途和授权；区分测试 fixture 与真实路径替代 | 不以局部样例或静默降级声称全量完成/真实集成通过 |

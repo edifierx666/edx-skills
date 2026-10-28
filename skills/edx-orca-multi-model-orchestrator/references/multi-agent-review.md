@@ -53,7 +53,9 @@ reviewer 必须排除被审范围的 authorFamilies。本模式被审范围是�
 - 三个 worker 全部 `worker_done` 且逐项对账完成后，coordinator 才输出最终整合结论；不等部分结果提前汇报。等待全部完成不等于无限等待：超时、空 wait、停在 prompt、fenced、失败、状态未知或报告缺失都必须进入状态清单。
 - 若任一必需 reviewer 或其内部 validator/angle child 未完成、失败、阻塞、未知或证据不足，coordinator 只能输出带逐项清单的 `partial`、`incomplete` 或 `unknown` 汇报，第一行明确“未形成可信的整体完成结论”，不能输出最终整合 verdict。
 - 已完成 reviewer 的发现可以临时展示，但必须标明覆盖范围、缺失 child、未完成验证和“不代表最终审查结论”；不得将部分结果包装成 PASS 或 SHIP。
-- 整合时按问题去重、按严重度排序，标明每条问题来自哪个 worker 与 `file:line` / 文档章节。
+- 整合时按问题去重、按严重度排序，标明每条问题来自哪个 worker 与 `file:line` / 文档章节；这张去重清单就是汇报契约中的主交付物，紧跟调度全景，逐 worker 明细不再重复列发现。
+- 用户只要求查漏/排查时，主交付物是“漏了什么、建议换成什么”的清单；重构、清理、分阶段改造计划属于超出本次范围的建议，只在“待你拍板”里一两行概括。
+- 某个 worker 的模型启动失败而改用其他模型时，这是 coordinator 的决定：在“待你拍板”中报备并请用户追认，报告文件名与正文的模型名保持一致。
 - worker 结论冲突时不自行裁决为“已接受”：列出分歧与各自证据，交用户决定。
 - `worker_done succeeded` 只代表审查角色完成并提交报告，不代表 `SHIP`；最终门禁按 `references/coordinator-protocol.md` 的质量门记录。
 
