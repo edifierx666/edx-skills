@@ -1,10 +1,15 @@
 {
-  "skill": "ui-ux-omission-guard",
+  "skill": "edx-ui-ux-omission-guard",
   "test_cases": [
-    {"input": "这个 Drawer 保存失败也关了，帮我把编辑闭环补上", "should_trigger": true},
-    {"input": "下拉被卡片 overflow 裁切了，点不到选项", "should_trigger": true},
+    {"input": "这个 Drawer 保存失败也关了，帮我把编辑闭环补上", "should_trigger": false},
+    {"input": "下拉被卡片 overflow 裁切了，点不到选项", "should_trigger": false},
     {"input": "页面看起来做完了，帮我扫一下遗漏的 UX", "should_trigger": true},
-    {"input": "快速切换 Tab 后渲染成旧数据", "should_trigger": true},
+    {"input": "快速切换 Tab 后渲染成旧数据", "should_trigger": false},
+    {"input": "检查这个 Drawer 的交互遗漏和体验缺口，额外改动先问我", "should_trigger": true},
+    {"input": "这个表单能保存了，再检查用户可能碰到的交互盲区", "should_trigger": true},
+    {"input": "只读检查这个页面有哪些 UX 遗漏，不要改文件", "should_trigger": true},
+    {"input": "这页做成可交付版本前，帮我判断体验是否完整", "should_trigger": true},
+    {"input": "只看这个 CSS 为什么不生效", "should_trigger": false},
     {"input": "把这段后端报表 SQL 的空值过滤掉", "should_trigger": false},
     {"input": "证明这个按钮的 onClick 有没有发出请求", "should_trigger": false}
   ]
